@@ -1,3 +1,11 @@
+#ifndef GRAPHICS_H
+#define GRAPHICS_H
+
+#include <stdlib.h>
+
+// Swap macro for line drawing
+#define swap(a, b) { uint16_t t = a; a = b; b = t; }
+
 // Routine for placing a single dot on the screen for 8bit-colour depth
 static inline void set(int16_t x, int16_t y, uint8_t colour)
 {
@@ -10,7 +18,7 @@ static inline void set(int16_t x, int16_t y, uint8_t colour)
 // Draw a straight line from (x0,y0) to (x1,y1) with given color
 // using Bresenham's algorithm
 // ---------------------------------------------------------------------------
-void draw_line(uint16_t colour, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
+static inline void draw_line(uint16_t colour, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 {
     int16_t dx, dy;
     int16_t err;
@@ -53,3 +61,5 @@ void draw_line(uint16_t colour, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t 
         }
     }
 }
+
+#endif // GRAPHICS_H

@@ -159,11 +159,11 @@ uint16_t update_sch = 0;
 #define NSTAR 32 // number of stars in the background
 #define STARFIELD_X 512 //Size of starfield (how often star pattern repeats)
 #define STARFIELD_Y 256
-static int16_t star_x[NSTAR] = {0};      //X-position -- World coordinates
-static int16_t star_y[NSTAR] = {0};      //Y-position -- World coordinates
-static int16_t star_x_old[NSTAR] = {0};  //prev X-position -- World coordinates
-static int16_t star_y_old[NSTAR] = {0};  //prev Y-position -- World coordinates
-static uint8_t star_colour[NSTAR] = {0};  //Colour
+int16_t star_x[NSTAR] = {0};      //X-position -- World coordinates
+int16_t star_y[NSTAR] = {0};      //Y-position -- World coordinates
+int16_t star_x_old[NSTAR] = {0};  //prev X-position -- World coordinates
+int16_t star_y_old[NSTAR] = {0};  //prev Y-position -- World coordinates
+uint8_t star_colour[NSTAR] = {0};  //Colour
 
 // Text configs
 #define NTEXT 1
