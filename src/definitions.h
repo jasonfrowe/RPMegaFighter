@@ -181,14 +181,14 @@ static bool start_button_pressed = false;  // For edge detection
 static const uint16_t vlen = 57600; // Extended Memory space for bitmap graphics (320x180 @ 8-bits)
 
 // Pre-calulated Angles: 255*sin(theta)
-static const int16_t sin_fix[] = {
+const int16_t sin_fix[] = {
     0, 65, 127, 180, 220, 246, 255, 246, 220, 180, 127, 65, 
     0, -65, -127, -180, -220, -246, -255, -246, -220, -180, 
     -127, -65, 0
 };
 
 // Pre-calulated Angles: 255*cos(theta)
-static const int16_t cos_fix[] = {
+const int16_t cos_fix[] = {
     255, 246, 220, 180, 127, 65, 0, -65, -127, -180, -220, -246, 
     -255, -246, -220, -180, -127, -65, 0, 65, 127, 180, 
     220, 246, 255
@@ -201,7 +201,7 @@ static const int16_t cos_fix[] = {
 //     -752, -864, -752, -464, 0
 // };
 
-static const int16_t t2_fix4[] = {
+const int16_t t2_fix4[] = {
     0, 288, 640, 1016, 1384, 1736, 2032, 2264, 2408, 2464, 
     2408, 2264, 2032, 1736, 1384, 1016, 640, 288, 0, -232, 
     -376, -432, -376, -232, 0
@@ -235,7 +235,7 @@ static const uint8_t dxdy_table[] = {
 };
 
 static uint8_t ri = 0;            // current rotation info for spaceship
-static const uint8_t ri_max = 23; // max rotations 
+const uint8_t ri_max = 23; // max rotations 
 
 // Spacecraft properties
 #define SHIP_ROT_SPEED 3 // How fast the spaceship can rotate, must be >= 1. 

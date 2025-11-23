@@ -18,6 +18,7 @@
 #include "graphics.h"
 #include "highscore.h"
 #include "hud.h"
+#include "fighters.h"
 
 // ============================================================================
 // GAME CONSTANTS
@@ -134,10 +135,10 @@ static uint8_t next_channel[SFX_TYPE_COUNT] = {0, 2};
 // ============================================================================
 
 // Player state
-static int16_t player_x = SCREEN_WIDTH_D2;
-static int16_t player_y = SCREEN_HEIGHT_D2;
+int16_t player_x = SCREEN_WIDTH_D2;
+int16_t player_y = SCREEN_HEIGHT_D2;
 static int16_t player_vx = 0, player_vy = 0;
-static int16_t player_vx_applied = 0, player_vy_applied = 0;
+int16_t player_vx_applied = 0, player_vy_applied = 0;
 static int16_t player_x_rem = 0, player_y_rem = 0;
 static int16_t player_rotation = 0;         // 0 to SHIP_ROTATION_STEPS-1
 static int16_t player_rotation_frame = 0;   // Frame counter for rotation speed
@@ -149,17 +150,17 @@ static bool player_shield_active = false;
 static bool player_boost_active = false;
 
 // Scrolling
-static int16_t scroll_dx = 0;
-static int16_t scroll_dy = 0;
-static int16_t world_offset_x = 0;  // Cumulative world offset from scrolling
-static int16_t world_offset_y = 0;
+int16_t scroll_dx = 0;
+int16_t scroll_dy = 0;
+int16_t world_offset_x = 0;  // Cumulative world offset from scrolling
+int16_t world_offset_y = 0;
 
 // Scores and game state
 int16_t player_score = 0;
 int16_t enemy_score = 0;
 int16_t game_score = 0;     // Skill-based score
 int16_t game_level = 1;
-static uint16_t game_frame = 0;    // Frame counter (0-59)
+uint16_t game_frame = 0;    // Frame counter (0-59)
 static bool game_over = false;
 
 // Control mode (from SGDK version)
@@ -167,21 +168,13 @@ static uint8_t control_mode = 0;   // 0 = rotational, 1 = directional
 
 // Bullet pools
 static Bullet bullets[MAX_BULLETS];
-static Bullet ebullets[MAX_EBULLETS];
 static Bullet sbullets[MAX_SBULLETS];
 static uint16_t bullet_cooldown = 0;
-static uint16_t ebullet_cooldown = 0;
-static uint16_t max_ebullet_cooldown = INITIAL_EBULLET_COOLDOWN;  // Decreases with level
 static uint16_t sbullet_cooldown = 0;
 static uint8_t current_bullet_index = 0;
-static uint8_t current_ebullet_index = 0;
 static uint8_t current_sbullet_index = 0;
 
-// Fighter pool
-static Fighter fighters[MAX_FIGHTERS];
-static int16_t active_fighter_count = 0;
-static int16_t fighter_speed_1 = 128;
-static int16_t fighter_speed_2 = 256;
+// Note: ebullets, fighters, and related state moved to fighters.c
 
 // Input state (keystates and start_button_pressed are in definitions.h)
 gamepad_t gamepad[GAMEPAD_COUNT];
@@ -255,13 +248,7 @@ static void init_bullets(void)
         bullets[i].vy_rem = 0;
     }
     
-    for (uint8_t i = 0; i < MAX_EBULLETS; i++) {
-        ebullets[i].status = -1;
-        ebullets[i].x = 0;
-        ebullets[i].y = 0;
-        ebullets[i].vx_rem = 0;
-        ebullets[i].vy_rem = 0;
-    }
+    // Note: ebullets initialized in init_fighters()
     
     for (uint8_t i = 0; i < MAX_SBULLETS; i++) {
         sbullets[i].status = -1;
@@ -271,35 +258,7 @@ static void init_bullets(void)
 /**
  * Initialize fighter/enemy pools - based on SGDK implementation
  */
-static void init_fighters(void)
-{
-    for (uint8_t i = 0; i < MAX_FIGHTERS; i++) {
-        fighters[i].vx_i = random(16, 256);  // Random speed component
-        fighters[i].vy_i = random(16, 256);
-        fighters[i].vx = 0;  // Will be set by AI
-        fighters[i].vy = 0;
-        fighters[i].status = 1;  // Active
-        
-        // Spawn offscreen relative to player starting position
-        fighters[i].x = random(SCREEN_WIDTH_D2, SCREEN_WIDTH) + SCREEN_WIDTH + 144;
-        fighters[i].y = random(SCREEN_HEIGHT_D2, SCREEN_HEIGHT) + SCREEN_HEIGHT + 104;
-        
-        // Randomize which side they spawn on
-        if (random(0, 1)) {
-            fighters[i].x = -fighters[i].x;
-        }
-        if (random(0, 1)) {
-            fighters[i].y = -fighters[i].y;
-        }
-        
-        fighters[i].vx_rem = 0;
-        fighters[i].vy_rem = 0;
-        fighters[i].dx = 0;
-        fighters[i].dy = 0;
-        fighters[i].frame = random(0, 1);  // Animation frame
-    }
-    active_fighter_count = MAX_FIGHTERS;
-}
+
 
 /**
  * Initialize star field for parallax scrolling background
@@ -397,7 +356,7 @@ static void stop_sound(uint8_t channel)
  * @param release Release rate (0-15)
  * @param volume Volume (0-15, where 0=loud, 15=silent)
  */
-static void play_sound(uint8_t sfx_type, uint16_t freq, uint8_t wave, 
+void play_sound(uint8_t sfx_type, uint16_t freq, uint8_t wave, 
                        uint8_t attack, uint8_t decay, uint8_t release, uint8_t volume)
 {
     if (sfx_type >= SFX_TYPE_COUNT) return;
@@ -850,41 +809,16 @@ static void update_bullets(void)
         }
         
         // Check collision with fighters before moving
-        for (uint8_t f = 0; f < MAX_FIGHTERS; f++) {
-            if (fighters[f].status > 0) {
-                // Convert fighter world position to screen position
-                int16_t fighter_screen_x = fighters[f].x - world_offset_x;
-                int16_t fighter_screen_y = fighters[f].y - world_offset_y;
-                
-                // Simple AABB collision: fighter sprite is 4x4 pixels, bullet is 2x2 pixels
-                // Check if bullet overlaps with fighter (6x6 hit box for better detection)
-                if (bullets[i].x >= fighter_screen_x - 2 && bullets[i].x < fighter_screen_x + 6 &&
-                    bullets[i].y >= fighter_screen_y - 2 && bullets[i].y < fighter_screen_y + 6) {
-                    
-                    // Hit! Remove bullet and fighter
-                    bullets[i].status = -1;
-                    
-                    // Clear tractor beam if fighter was attacking (status == 2)
-                    if (fighters[f].status == 2) {
-                        // TODO: Clear line at lx1, ly1, lx2, ly2
-                    }
-                    
-                    // Set status to 0 to start respawn timer
-                    fighters[f].status = 0;
-                    active_fighter_count--;
-                    
-                    // Award points
-                    player_score += SCORE_BASIC_KILL;
-                    game_score += SCORE_BASIC_KILL;
-                    
-                    // Move bullet sprite offscreen
-                    unsigned ptr = BULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
-                    xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
-                    xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-                    
-                    goto next_bullet;  // Skip rest of bullet update
-                }
-            }
+        if (check_bullet_fighter_collision(bullets[i].x, bullets[i].y, &player_score, &game_score)) {
+            // Hit! Remove bullet
+            bullets[i].status = -1;
+            
+            // Move bullet sprite offscreen
+            unsigned ptr = BULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
+            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
+            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
+            
+            goto next_bullet;  // Skip rest of bullet update
         }
         
         // Get velocity components based on bullet direction
@@ -928,122 +862,7 @@ static void update_bullets(void)
  * Update all active enemy fighters - based on MySegaGame SGDK implementation
  * Fighters chase the player and fire bullets
  */
-static void update_fighters(void)
-{
-    int16_t fvx_applied, fvy_applied;
-    
-    // Calculate player's world position
-    int16_t player_world_x = player_x + world_offset_x;
-    int16_t player_world_y = player_y + world_offset_y;
-    
-    for (uint8_t i = 0; i < MAX_FIGHTERS; i++) {
-        // Handle respawning dead fighters
-        if (fighters[i].status <= 0) {
-            // Respawn counter (counts down to -FIGHTER_SPAWN_RATE)
-            fighters[i].status--;
-            if (fighters[i].status <= -FIGHTER_SPAWN_RATE) {
-                // Respawn fighter off-screen relative to current viewport
-                fighters[i].vx_i = random(16, 256);
-                fighters[i].vy_i = random(16, 256);
-                
-                // Choose random edge: 0=right, 1=left, 2=bottom, 3=top
-                uint8_t edge = random(0, 3);
-                
-                if (edge == 0) {
-                    // Spawn off right edge
-                    fighters[i].x = world_offset_x + SCREEN_WIDTH + random(20, 100);
-                    fighters[i].y = world_offset_y + random(20, SCREEN_HEIGHT - 20);
-                } else if (edge == 1) {
-                    // Spawn off left edge
-                    fighters[i].x = world_offset_x - random(20, 100);
-                    fighters[i].y = world_offset_y + random(20, SCREEN_HEIGHT - 20);
-                } else if (edge == 2) {
-                    // Spawn off bottom edge
-                    fighters[i].x = world_offset_x + random(20, SCREEN_WIDTH - 20);
-                    fighters[i].y = world_offset_y + SCREEN_HEIGHT + random(20, 100);
-                } else {
-                    // Spawn off top edge
-                    fighters[i].x = world_offset_x + random(20, SCREEN_WIDTH - 20);
-                    fighters[i].y = world_offset_y - random(20, 100);
-                }
-                
-                fighters[i].status = 1;
-                active_fighter_count++;
-            }
-            continue;
-        }
-        
-        // Check collision with player (both in screen coordinates)
-        int16_t fighter_screen_x = fighters[i].x - world_offset_x;
-        int16_t fighter_screen_y = fighters[i].y - world_offset_y;
-        
-        // 4x4 fighter vs 8x8 player sprite collision
-        if (fighter_screen_x + 4 > player_x && fighter_screen_x < player_x + 8 &&
-            fighter_screen_y + 4 > player_y && fighter_screen_y < player_y + 8) {
-            // Collision! Fighter dies, player takes damage
-            fighters[i].status = 0;
-            active_fighter_count--;
-            enemy_score += 2;  // Enemy gets 2 points for player crash
-            
-            continue;
-        }
-        
-        // Update velocity every 30 frames using AI decision
-        if (game_frame == 0) {
-            // Calculate distance to player (in world coordinates)
-            int16_t fdx = player_world_x - fighters[i].x;
-            int16_t fdy = player_world_y - fighters[i].y;
-            
-            // Chase player in X direction (always)
-            if (fdx > 0) {
-                fighters[i].vx = fighters[i].vx_i;  // Move toward player
-            } else if (fdx < 0) {
-                fighters[i].vx = -fighters[i].vx_i;
-            } else {
-                fighters[i].vx = 0;
-            }
-            
-            // Chase player in Y direction (always)
-            if (fdy > 0) {
-                fighters[i].vy = fighters[i].vy_i;  // Move toward player
-            } else if (fdy < 0) {
-                fighters[i].vy = -fighters[i].vy_i;
-            } else {
-                fighters[i].vy = 0;
-            }
-        }
-        
-        // Apply velocity with fixed-point math (divide by 256 using fighter_speed_1 = 8)
-        fvx_applied = (fighters[i].vx + fighters[i].vx_rem) >> 8;
-        fvy_applied = (fighters[i].vy + fighters[i].vy_rem) >> 8;
-        
-        fighters[i].vx_rem = fighters[i].vx + fighters[i].vx_rem - (fvx_applied << 8);
-        fighters[i].vy_rem = fighters[i].vy + fighters[i].vy_rem - (fvy_applied << 8);
-        
-        fighters[i].dx = fvx_applied;
-        fighters[i].dy = fvy_applied;
-        
-        // Update position
-        fighters[i].x += fvx_applied;
-        fighters[i].y += fvy_applied;
-        
-        // Wrap around relative to viewport - if fighter goes too far off one edge, wrap to opposite edge
-        int16_t fighter_offset_x = fighters[i].x - world_offset_x;
-        int16_t fighter_offset_y = fighters[i].y - world_offset_y;
-        
-        if (fighter_offset_x > SCREEN_WIDTH + 200) {
-            fighters[i].x = world_offset_x - 150;
-        } else if (fighter_offset_x < -200) {
-            fighters[i].x = world_offset_x + SCREEN_WIDTH + 150;
-        }
-        
-        if (fighter_offset_y > SCREEN_HEIGHT + 200) {
-            fighters[i].y = world_offset_y - 150;
-        } else if (fighter_offset_y < -200) {
-            fighters[i].y = world_offset_y + SCREEN_HEIGHT + 150;
-        }
-    }
-}
+
 
 /**
  * Fire a bullet from the player ship
@@ -1078,171 +897,9 @@ static void fire_bullet(void)
     }
 }
 
-/**
- * Fire enemy bullet - based on SGDK implementation
- * Fighters fire bullets at predicted player position
- */
-static void fire_ebullet(void)
-{
-    if (ebullet_cooldown > 0) {
-        return;
-    }
-    
-    ebullet_cooldown = max_ebullet_cooldown;
-    
-    // Calculate player's world position
-    int16_t player_world_x = player_x + world_offset_x;
-    int16_t player_world_y = player_y + world_offset_y;
-    
-    if (ebullets[current_ebullet_index].status < 0) {
-        // Find a fighter that can fire
-        for (uint8_t i = 0; i < MAX_FIGHTERS; i++) {
-            if (fighters[i].status == 1) {
-                // Check if fighter is on screen
-                int16_t screen_x = fighters[i].x - world_offset_x;
-                int16_t screen_y = fighters[i].y - world_offset_y;
-                
-                // Only fire if fighter is actually visible on screen (not at edge)
-                if (screen_x > 0 && screen_x < SCREEN_WIDTH - 4 &&
-                    screen_y > 0 && screen_y < SCREEN_HEIGHT - 4) {
-                    
-                    // Calculate distance to player (in world coordinates)
-                    int16_t fdx = player_world_x - fighters[i].x;
-                    int16_t fdy = -(player_world_y - fighters[i].y);  // Flip Y
-                    int16_t distance = abs(fdx) + abs(fdy);
-                    
-                    if (distance > 0) {
-                        // Predict player position (time to impact)
-                        int16_t tti_frames = distance / 4;  // ENEMY_BULLET_SPEED = 4
-                        if (tti_frames == 0) tti_frames = 1;
-                        
-                        int16_t pre_player_x = player_world_x + 4 + (player_vx_applied * tti_frames);
-                        int16_t pre_player_y = player_world_y + 4 + (player_vy_applied * tti_frames);
-                        
-                        // Recalculate to predicted position
-                        fdx = pre_player_x - fighters[i].x;
-                        fdy = -pre_player_y + fighters[i].y;
-                        
-                        // Find best rotation angle using dot product
-                        int16_t best_index = 0;
-                        int32_t max_dot = -8388608;  // Very negative number
-                        
-                        for (uint8_t j = 0; j < SHIP_ROTATION_STEPS; j++) {
-                            int32_t current_dot = (int32_t)fdx * cos_fix[j] + (int32_t)fdy * sin_fix[j];
-                            if (current_dot > max_dot) {
-                                max_dot = current_dot;
-                                best_index = j;
-                            }
-                        }
-                        
-                        // Fire the bullet (spawn at fighter's screen position)
-                        ebullets[current_ebullet_index].status = best_index;
-                        ebullets[current_ebullet_index].x = screen_x;
-                        ebullets[current_ebullet_index].y = screen_y;
-                        ebullets[current_ebullet_index].vx_rem = 0;
-                        ebullets[current_ebullet_index].vy_rem = 0;
-                        
-                        // Update sprite hardware position immediately
-                        unsigned bullet_ptr = EBULLET_CONFIG + current_ebullet_index * sizeof(vga_mode4_sprite_t);
-                        xram0_struct_set(bullet_ptr, vga_mode4_sprite_t, x_pos_px, screen_x);
-                        xram0_struct_set(bullet_ptr, vga_mode4_sprite_t, y_pos_px, screen_y);
-                        
-                        // Play higher pitched enemy fire sound
-                        play_sound(SFX_TYPE_ENEMY_FIRE, 440, PSG_WAVE_TRIANGLE, 0, 4, 3, 2);
-                        
-                        // Set fighter to cooldown state
-                        fighters[i].status = 2;
-                        
-                        current_ebullet_index++;
-                        if (current_ebullet_index >= MAX_EBULLETS) {
-                            current_ebullet_index = 0;
-                        }
-                        
-                        break;
-                    }
-                }
-            } else if (fighters[i].status > 1) {
-                // Cooldown counter
-                fighters[i].status++;
-                if (fighters[i].status > EFIRE_COOLDOWN_TIMER) {
-                    fighters[i].status = 1;  // Ready to fire again
-                }
-            }
-        }
-    }
-}
 
-/**
- * Update enemy bullets - based on SGDK implementation
- */
-static void update_ebullets(void)
-{
-    // Adjust all active ebullets for scrolling
-    for (uint8_t i = 0; i < MAX_EBULLETS; i++) {
-        if (ebullets[i].status >= 0) {
-            ebullets[i].x -= scroll_dx;
-            ebullets[i].y -= scroll_dy;
-        }
-    }
-    
-    for (uint8_t i = 0; i < MAX_EBULLETS; i++) {
-        unsigned ptr = EBULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
-        
-        if (ebullets[i].status < 0) {
-            // Move sprite offscreen if inactive
-            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-            continue;
-        }
-        
-        // Check collision with player
-        if (player_x < ebullets[i].x + 2 &&
-            player_x + 8 > ebullets[i].x &&
-            player_y < ebullets[i].y + 2 &&
-            player_y + 8 > ebullets[i].y) {
-            
-            // Hit! Remove bullet and damage player
-            ebullets[i].status = -1;
-            
-            // Award point to enemy
-            enemy_score++;
-            
-            // Move sprite offscreen
-            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-            
-            continue;
-        }
-        
-        // Get velocity from stored direction
-        int16_t bvx = cos_fix[ebullets[i].status];
-        int16_t bvy = -sin_fix[ebullets[i].status];
-        
-        // Apply velocity (divide by 64 for speed = 4)
-        int16_t bvx_applied = (bvx + ebullets[i].vx_rem) >> 6;
-        int16_t bvy_applied = (bvy + ebullets[i].vy_rem) >> 6;
-        
-        ebullets[i].vx_rem = bvx + ebullets[i].vx_rem - (bvx_applied << 6);
-        ebullets[i].vy_rem = bvy + ebullets[i].vy_rem - (bvy_applied << 6);
-        
-        // Update position
-        ebullets[i].x += bvx_applied;
-        ebullets[i].y += bvy_applied;
-        
-        // Check if still on screen
-        if (ebullets[i].x > -10 && ebullets[i].x < SCREEN_WIDTH + 10 &&
-            ebullets[i].y > -10 && ebullets[i].y < SCREEN_HEIGHT + 10) {
-            // Update sprite position
-            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, ebullets[i].x);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, ebullets[i].y);
-        } else {
-            // Bullet went offscreen, deactivate
-            ebullets[i].status = -1;
-            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-        }
-    }
-}
+
+
 
 // ============================================================================
 // RENDERING
@@ -1385,26 +1042,7 @@ static void render_game(void)
     draw_stars(scroll_dx, scroll_dy);
     
     // Update fighter sprite positions
-    for (uint8_t i = 0; i < MAX_FIGHTERS; i++) {
-        if (fighters[i].status > 0) {
-            // Fighters are in world coordinates
-            // Player screen position + world offset = player world position
-            // Fighter screen position = fighter world position - player world position + player screen position
-            int16_t screen_x = fighters[i].x - world_offset_x;
-            int16_t screen_y = fighters[i].y - world_offset_y;
-            
-            // Update sprite position
-            unsigned ptr = FIGHTER_CONFIG + i * sizeof(vga_mode4_sprite_t);
-            
-            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, screen_x);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, screen_y);
-        } else {
-            // Move offscreen if inactive
-            unsigned ptr = FIGHTER_CONFIG + i * sizeof(vga_mode4_sprite_t);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-        }
-    }
+    render_fighters();
     
     // Bullets are drawn in update_bullets() and update_ebullets()
     
@@ -1453,14 +1091,7 @@ static void show_game_over(void)
     const uint16_t center_x = 100;
     
     // Move all active fighters offscreen
-    for (uint8_t i = 0; i < MAX_FIGHTERS; i++) {
-        if (fighters[i].status > 0) {
-            unsigned ptr = FIGHTER_CONFIG + i * sizeof(vga_mode4_sprite_t);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-            fighters[i].status = 0;
-        }
-    }
+    move_fighters_offscreen();
     
     // Move all bullets offscreen
     for (uint8_t i = 0; i < MAX_BULLETS; i++) {
@@ -1473,14 +1104,7 @@ static void show_game_over(void)
     }
     
     // Move all enemy bullets offscreen
-    for (uint8_t i = 0; i < MAX_EBULLETS; i++) {
-        if (ebullets[i].status >= 0) {
-            unsigned ptr = EBULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-            ebullets[i].status = -1;
-        }
-    }
+    move_ebullets_offscreen();
     
     // Reset player position to center
     player_x = SCREEN_WIDTH_D2;
@@ -1797,9 +1421,9 @@ int main(void)
             continue;
         }
         
-            // Update cooldown timers
+        // Update cooldown timers
         if (bullet_cooldown > 0) bullet_cooldown--;
-        if (ebullet_cooldown > 0) ebullet_cooldown--;
+        decrement_ebullet_cooldown();
         if (sbullet_cooldown > 0) sbullet_cooldown--;
         
         // Enemy bullet system
@@ -1836,10 +1460,7 @@ int main(void)
             game_level++;
             
             // Increase difficulty by reducing enemy bullet cooldown
-            max_ebullet_cooldown -= EBULLET_COOLDOWN_DECREASE;
-            if (max_ebullet_cooldown < MIN_EBULLET_COOLDOWN) {
-                max_ebullet_cooldown = MIN_EBULLET_COOLDOWN;
-            }
+            increase_fighter_difficulty();
             
             // Show level up screen
             show_level_up();
