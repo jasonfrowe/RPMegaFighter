@@ -29,6 +29,7 @@ rp6502_executable(rpmegafighter
 target_sources(rpmegafighter PRIVATE
     src/rpmegafighter.c
     src/highscore.c
+    src/hud.c
     src/random.c
 )
 

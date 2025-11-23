@@ -1,5 +1,7 @@
 # Mega Super Fighter Challenge
 
+Download the latest rom: [v2025.11.22](https://github.com/jasonfrowe/RPMegaFighter/releases/download/v0.1/rpmegafighter_20251122.rp6502)
+
 ## Overview
 Dive into an epic space battle where you are the
 last hope against an overwhelming armada of
