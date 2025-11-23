@@ -93,8 +93,6 @@ typedef struct {
 #define GP_BTN_L3         0x20
 #define GP_BTN_R3         0x40
 
-static gamepad_t gamepad[GAMEPAD_COUNT];
-
 
 //XRAM Memory addresses
 #define VGA_CONFIG_START 0xECA0 //Start of graphic config addresses (after gamepad data)
