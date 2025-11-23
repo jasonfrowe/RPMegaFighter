@@ -145,18 +145,22 @@ void update_fighters(void)
                 fighters[i].vx_i = random(fighter_speed_min, fighter_speed_max);
                 fighters[i].vy_i = random(fighter_speed_min, fighter_speed_max);
                 
-                uint8_t edge = random(0, 3);
+                uint8_t edge = random(0, 4);  // 0=right, 1=left, 2=top, 3=bottom
                 
                 if (edge == 0) {
+                    // Spawn on right edge
                     fighters[i].x = world_offset_x + SCREEN_WIDTH + random(20, 100);
                     fighters[i].y = world_offset_y + random(20, SCREEN_HEIGHT - 20);
                 } else if (edge == 1) {
+                    // Spawn on left edge
                     fighters[i].x = world_offset_x - random(20, 100);
                     fighters[i].y = world_offset_y + random(20, SCREEN_HEIGHT - 20);
                 } else if (edge == 2) {
+                    // Spawn on top edge
                     fighters[i].x = world_offset_x + random(20, SCREEN_WIDTH - 20);
                     fighters[i].y = world_offset_y + SCREEN_HEIGHT + random(20, 100);
                 } else {
+                    // Spawn on bottom edge
                     fighters[i].x = world_offset_x + random(20, SCREEN_WIDTH - 20);
                     fighters[i].y = world_offset_y - random(20, 100);
                 }

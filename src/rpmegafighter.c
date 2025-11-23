@@ -111,6 +111,10 @@ int16_t scroll_dy = 0;
 int16_t world_offset_x = 0;  // Cumulative world offset from scrolling
 int16_t world_offset_y = 0;
 
+// Earth background sprite
+int16_t earth_x = 0;
+int16_t earth_y = 0;
+
 // Scores and game state
 int16_t player_score = 0;
 int16_t enemy_score = 0;
@@ -226,8 +230,21 @@ static void init_graphics(void)
     // Enable Mode 3 bitmap (4-bit color)
     xregn(1, 0, 1, 4, 3, 3, BITMAP_CONFIG, 1);
     
+    // Set up Earth background sprite (VGA Mode 4 - regular sprite)
+    EARTH_CONFIG = BITMAP_CONFIG + sizeof(vga_mode3_config_t);
+    
+    // Initialize Earth sprite centered on screen
+    earth_x = SCREEN_WIDTH / 2;
+    earth_y = SCREEN_HEIGHT / 2;
+    
+    xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, x_pos_px, earth_x);
+    xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, y_pos_px, earth_y);
+    xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, xram_sprite_ptr, EARTH_DATA);
+    xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, log_size, 5);  // 32x32 sprite (2^5)
+    xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, has_opacity_metadata, false);
+    
     // Set up player spacecraft sprite (VGA Mode 4 - affine sprite with rotation)
-    SPACECRAFT_CONFIG = BITMAP_CONFIG + sizeof(vga_mode3_config_t);
+    SPACECRAFT_CONFIG = EARTH_CONFIG + sizeof(vga_mode4_sprite_t);
     
     // Initialize rotation transform matrix (identity at rotation 0)
     int16_t initial_rotation = get_player_rotation();
@@ -302,9 +319,11 @@ static void init_graphics(void)
     }
     
     // Enable sprite modes:
-    // First enable affine sprites (player) - 1 sprite at SPACECRAFT_CONFIG
+    // First enable Earth sprite (background layer)
+    xregn(1, 0, 1, 5, 4, 0, EARTH_CONFIG, 1, 0);
+    // Then enable affine sprites (player) - 1 sprite at SPACECRAFT_CONFIG
     xregn(1, 0, 1, 5, 4, 1, SPACECRAFT_CONFIG, 1, 2);
-    // Then enable regular sprites (fighters + ebullets + bullets + sbullets) - all regular sprites in one call
+    // Finally enable regular sprites (fighters + ebullets + bullets + sbullets) - all regular sprites in one call
     xregn(1, 0, 1, 5, 4, 0, FIGHTER_CONFIG, MAX_FIGHTERS + MAX_EBULLETS + MAX_BULLETS + MAX_SBULLETS, 1);
     
     // Clear bitmap memory
@@ -409,6 +428,31 @@ static void render_game(void)
 {
     // Draw scrolling star background
     draw_stars(scroll_dx, scroll_dy);
+    
+    // Update Earth sprite position based on scrolling with wrapping
+    earth_x -= scroll_dx;
+    earth_y -= scroll_dy;
+    
+    // Wrap Earth horizontally - same as stars
+    if (earth_x <= -30) {
+        earth_x += STARFIELD_2X;
+    }
+    if (earth_x > STARFIELD_2X - 30) {
+        earth_x -= STARFIELD_2X;
+    }
+    
+    // Wrap Earth vertically - same as stars
+    if (earth_y <= -30) {
+        // When wrapping from top, place at bottom minus HUD offset
+        earth_y += STARFIELD_2Y;
+    }
+    if (earth_y > STARFIELD_2Y - 30) {
+        // When wrapping from bottom, place below HUD area
+        earth_y -= STARFIELD_2Y;
+    }
+    
+    xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, x_pos_px, earth_x);
+    xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, y_pos_px, earth_y);
     
     // Update fighter sprite positions
     render_fighters();

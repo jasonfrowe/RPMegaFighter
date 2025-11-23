@@ -82,8 +82,6 @@ const int16_t t2_fix4[] = {
     -376, -432, -376, -232, 0
 };
 
-// Earth initial position
-static int16_t earth_x = SCREEN_WIDTH/2 - 16;
-static int16_t earth_y = SCREEN_HEIGHT/2 - 16;
+// Earth center position constants
 static int16_t earth_xc = SCREEN_WIDTH/2;
 static int16_t earth_yc = SCREEN_HEIGHT/2;
