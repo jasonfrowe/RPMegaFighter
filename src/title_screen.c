@@ -1,12 +1,10 @@
 #include "title_screen.h"
+#include "screen.h"
 #include <rp6502.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
-
-// Define SWIDTH before including graphics.h
-#define SWIDTH 320
 
 #include "graphics.h"
 #include "usb_hid_keys.h"

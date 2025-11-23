@@ -14,6 +14,7 @@
 
 #include "usb_hid_keys.h"
 #include "definitions.h"
+#include "screen.h"
 #include "random.h"
 #include "graphics.h"
 #include "highscore.h"
@@ -32,12 +33,6 @@
 // ============================================================================
 // GAME CONSTANTS
 // ============================================================================
-
-// Screen dimensions
-#define SCREEN_WIDTH        320
-#define SCREEN_HEIGHT       180
-#define SCREEN_WIDTH_D2     160
-#define SCREEN_HEIGHT_D2    90
 
 // World/map dimensions  
 #define MAP_SIZE            1024

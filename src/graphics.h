@@ -1,6 +1,7 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
+#include "screen.h"
 #include <stdlib.h>
 
 // Swap macro for line drawing
@@ -9,7 +10,7 @@
 // Routine for placing a single dot on the screen for 8bit-colour depth
 static inline void set(int16_t x, int16_t y, uint8_t colour)
 {
-    RIA.addr0 =  x + (SWIDTH * y);
+    RIA.addr0 =  x + (SCREEN_WIDTH * y);
     RIA.step0 = 1;
     RIA.rw0 = colour;
 }

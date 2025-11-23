@@ -1,4 +1,5 @@
 #include "player.h"
+#include "screen.h"
 #include "bullets.h"
 #include "sound.h"
 #include <rp6502.h>
@@ -8,11 +9,6 @@
 // ============================================================================
 // CONSTANTS
 // ============================================================================
-
-#define SCREEN_WIDTH        320
-#define SCREEN_HEIGHT       180
-#define SCREEN_WIDTH_D2     160
-#define SCREEN_HEIGHT_D2    90
 
 #define SHIP_ROTATION_STEPS 24
 #define SHIP_ROT_SPEED      3

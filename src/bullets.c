@@ -1,4 +1,6 @@
 #include "bullets.h"
+#include "screen.h"
+#include "sound.h"
 #include <rp6502.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -6,9 +8,6 @@
 // ============================================================================
 // CONSTANTS
 // ============================================================================
-
-#define SCREEN_WIDTH        320
-#define SCREEN_HEIGHT       180
 
 #define MAX_BULLETS         8
 #define MAX_SBULLETS        3

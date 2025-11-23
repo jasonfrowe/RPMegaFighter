@@ -2,13 +2,12 @@
  * World and screen sizes
  */
 
-#define MAPSIZE 2048     // Size of world (world coordinates)
-#define MMAPSIZE -2048
-#define MAPSIZED2 1024 
-#define MMAPSIZED2 -1024 
-#define MAPSIZEM1 1023 
-#define SWIDTH 320       // width of visible screen
-#define SHEIGHT 180      // height of visible screen
+// Screen dimensions (used by modules)
+#define SCREEN_WIDTH        320
+#define SCREEN_HEIGHT       180
+#define SCREEN_WIDTH_D2     160
+#define SCREEN_HEIGHT_D2    90
+
 static int16_t dx = 0;   // scrolling of visible screen relative to World map
 static int16_t dy = 0;
 
@@ -148,9 +147,9 @@ static uint8_t nsprites = 0;
 #define BBX 100
 #define BBY 60
 static int16_t BX1 = BBX;
-static int16_t BX2 = SWIDTH - BBX;
+static int16_t BX2 = SCREEN_WIDTH - BBX;
 static int16_t BY1 = BBY;
-static int16_t BY2 = SHEIGHT - BBY;
+static int16_t BY2 = SCREEN_HEIGHT - BBY;
 
 //Frame counter
 uint16_t update_sch = 0; 
@@ -237,10 +236,10 @@ const uint8_t ri_max = 23; // max rotations
 #define SHIP_ROT_SPEED 3 // How fast the spaceship can rotate, must be >= 1. 
 
 // Earth initial position
-static int16_t earth_x = SWIDTH/2 - 16;
-static int16_t earth_y = SHEIGHT/2 - 16;
-static int16_t earth_xc = SWIDTH/2;
-static int16_t earth_yc = SHEIGHT/2;
+static int16_t earth_x = SCREEN_WIDTH/2 - 16;
+static int16_t earth_y = SCREEN_HEIGHT/2 - 16;
+static int16_t earth_xc = SCREEN_WIDTH/2;
+static int16_t earth_yc = SCREEN_HEIGHT/2;
 
 // Initial position and velocity of spacecraft
 static int16_t x = 160;  //Screen-coordinates of spacecraft

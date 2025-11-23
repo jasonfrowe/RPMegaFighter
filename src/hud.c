@@ -1,4 +1,5 @@
 #include "hud.h"
+#include "screen.h"
 #include <rp6502.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -11,7 +12,6 @@ extern int16_t game_level;
 
 // Constants from main file
 #define SCORE_TO_WIN        100
-#define SWIDTH              320
 
 // Graphics functions from main file
 extern void draw_text(int16_t x, int16_t y, const char* text, uint8_t color);
@@ -26,7 +26,7 @@ static inline void set(int16_t x, int16_t y, uint8_t color);
 static inline void set(int16_t x, int16_t y, uint8_t color)
 {
     if (x >= 0 && x < 320 && y >= 0 && y < 180) {
-        RIA.addr0 = x + (SWIDTH * y);
+        RIA.addr0 = x + (SCREEN_WIDTH * y);
         RIA.step0 = 1;
         RIA.rw0 = color;
     }

@@ -1,9 +1,7 @@
 #include "text.h"
+#include "screen.h"
 #include <rp6502.h>
 #include <stdint.h>
-
-// Graphics constants
-#define SWIDTH 320
 
 #include "graphics.h"
 

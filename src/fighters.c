@@ -1,4 +1,5 @@
 #include "fighters.h"
+#include "screen.h"
 #include "random.h"
 #include "sound.h"
 #include <rp6502.h>
@@ -9,11 +10,6 @@
 // ============================================================================
 // CONSTANTS
 // ============================================================================
-
-#define SCREEN_WIDTH        320
-#define SCREEN_HEIGHT       180
-#define SCREEN_WIDTH_D2     160
-#define SCREEN_HEIGHT_D2    90
 
 #define MAX_FIGHTERS        30
 #define FIGHTER_SPAWN_RATE  128

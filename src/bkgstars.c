@@ -9,7 +9,6 @@
 #define NSTAR 32
 #define STARFIELD_X 512
 #define STARFIELD_Y 256
-#define SWIDTH 320
 
 #include "graphics.h"
 
