@@ -34,26 +34,13 @@ unsigned EBULLET_CONFIG;        //Enemy bullet sprite config
 unsigned BULLET_CONFIG;         //Player bullet sprite config
 unsigned TEXT_CONFIG;           //On screen text configs
 
-//Boundary for scrolling -- how far we can move the spaceshift until the background scrolls 
-#define BBX 100
-#define BBY 60
-static int16_t BX1 = BBX;
-static int16_t BX2 = SCREEN_WIDTH - BBX;
-static int16_t BY1 = BBY;
-static int16_t BY2 = SCREEN_HEIGHT - BBY;
 
-//Frame counter
-uint16_t update_sch = 0; 
-
-//Background stars -- it'd be nice to change this to tiles.
-#define NSTAR 32 // number of stars in the background
-#define STARFIELD_X 512 //Size of starfield (how often star pattern repeats)
-#define STARFIELD_Y 256
-int16_t star_x[NSTAR] = {0};      //X-position -- World coordinates
-int16_t star_y[NSTAR] = {0};      //Y-position -- World coordinates
-int16_t star_x_old[NSTAR] = {0};  //prev X-position -- World coordinates
-int16_t star_y_old[NSTAR] = {0};  //prev Y-position -- World coordinates
-uint8_t star_colour[NSTAR] = {0};  //Colour
+// Star arrays (defined here, declared in bkgstars.h)
+int16_t star_x[32] = {0};
+int16_t star_y[32] = {0};
+int16_t star_x_old[32] = {0};
+int16_t star_y_old[32] = {0};
+uint8_t star_colour[32] = {0};
 
 // Text configs
 #define NTEXT 1
@@ -92,10 +79,6 @@ const int16_t t2_fix4[] = {
     2408, 2264, 2032, 1736, 1384, 1016, 640, 288, 0, -232, 
     -376, -432, -376, -232, 0
 };
-
-
-static uint8_t ri = 0;            // current rotation info for spaceship
-const uint8_t ri_max = 23; // max rotations 
 
 // Earth initial position
 static int16_t earth_x = SCREEN_WIDTH/2 - 16;

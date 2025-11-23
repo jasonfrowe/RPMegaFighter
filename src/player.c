@@ -34,7 +34,6 @@ extern gamepad_t gamepad[GAMEPAD_COUNT];
 extern const int16_t sin_fix[25];
 extern const int16_t cos_fix[25];
 extern const int16_t t2_fix4[25];
-extern const uint8_t ri_max;
 
 // Sprite configuration addresses
 extern unsigned SPACECRAFT_CONFIG;
@@ -253,7 +252,7 @@ void update_player_sprite(void)
     xram0_struct_set(SPACECRAFT_CONFIG, vga_mode4_asprite_t, transform[2],  t2_fix4[player_rotation]);
     xram0_struct_set(SPACECRAFT_CONFIG, vga_mode4_asprite_t, transform[3],  sin_fix[player_rotation]);
     xram0_struct_set(SPACECRAFT_CONFIG, vga_mode4_asprite_t, transform[4],  cos_fix[player_rotation]);
-    xram0_struct_set(SPACECRAFT_CONFIG, vga_mode4_asprite_t, transform[5],  t2_fix4[ri_max - player_rotation + 1]);
+    xram0_struct_set(SPACECRAFT_CONFIG, vga_mode4_asprite_t, transform[5],  t2_fix4[SHIP_ROTATION_MAX - player_rotation + 1]);
 }
 
 void fire_bullet(void)

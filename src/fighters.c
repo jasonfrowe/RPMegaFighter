@@ -69,7 +69,6 @@ extern unsigned EBULLET_CONFIG;
 // Lookup tables from definitions.h
 extern const int16_t sin_fix[25];
 extern const int16_t cos_fix[25];
-extern const uint8_t ri_max;
 
 // Sound system (types defined in sound.h)
 extern void play_sound(uint8_t type, uint16_t frequency, uint8_t waveform, 

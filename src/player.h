@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+// Ship rotation constant (24 rotation steps, 0-23)
+#define SHIP_ROTATION_MAX 23
+
 /**
  * Initialize player state at game start
  */

@@ -4,20 +4,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "random.h"
-
-// Constants for star field
-#define NSTAR 32
-#define STARFIELD_X 512
-#define STARFIELD_Y 256
-
 #include "graphics.h"
-
-// External reference to star arrays
-extern int16_t star_x[NSTAR];
-extern int16_t star_y[NSTAR];
-extern int16_t star_x_old[NSTAR];
-extern int16_t star_y_old[NSTAR];
-extern uint8_t star_colour[NSTAR];
 
 void init_stars(void) 
 {
