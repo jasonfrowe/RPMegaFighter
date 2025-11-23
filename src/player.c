@@ -1,4 +1,5 @@
 #include "player.h"
+#include "bullets.h"
 #include <rp6502.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -25,11 +26,7 @@
 // TYPES
 // ============================================================================
 
-typedef struct {
-    int16_t x, y;
-    int16_t status;
-    int16_t vx_rem, vy_rem;
-} Bullet;
+// Bullet type defined in bullets.h
 
 // ============================================================================
 // EXTERNAL DEPENDENCIES

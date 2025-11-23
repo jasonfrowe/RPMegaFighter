@@ -20,6 +20,7 @@
 #include "hud.h"
 #include "fighters.h"
 #include "player.h"
+#include "bullets.h"
 
 // ============================================================================
 // GAME CONSTANTS
@@ -73,12 +74,7 @@
 // GAME STRUCTURES
 // ============================================================================
 
-// Bullet structure
-typedef struct {
-    int16_t x, y;           // Position
-    int16_t status;         // -1 = inactive, 0-23 = active with direction
-    int16_t vx_rem, vy_rem; // Velocity remainder for sub-pixel movement
-} Bullet;
+// Bullet structure defined in bullets.h
 
 // Fighter/Enemy structure  
 typedef struct {
@@ -156,12 +152,9 @@ static bool game_over = false;
 // Control mode (from SGDK version)
 static uint8_t control_mode = 0;   // 0 = rotational, 1 = directional
 
-// Bullet pools
-Bullet bullets[MAX_BULLETS];
-static Bullet sbullets[MAX_SBULLETS];
-static uint16_t sbullet_cooldown = 0;
-uint8_t current_bullet_index = 0;
-static uint8_t current_sbullet_index = 0;
+// Bullet pools - now in bullets.c module
+extern Bullet bullets[MAX_BULLETS];
+extern uint8_t current_bullet_index;
 
 // Note: ebullets, fighters, and related state moved to fighters.c
 
@@ -226,28 +219,13 @@ static inline uint8_t normalize_rotation(int16_t rotation)
 
 /**
  * Initialize bullet pools - mark all bullets as inactive
+ * Note: Moved to bullets.c
  */
-static void init_bullets(void)
-{
-    for (uint8_t i = 0; i < MAX_BULLETS; i++) {
-        bullets[i].status = -1;
-        bullets[i].x = 0;
-        bullets[i].y = 0;
-        bullets[i].vx_rem = 0;
-        bullets[i].vy_rem = 0;
-    }
-    
-    // Note: ebullets initialized in init_fighters()
-    
-    for (uint8_t i = 0; i < MAX_SBULLETS; i++) {
-        sbullets[i].status = -1;
-    }
-}
 
 /**
  * Initialize fighter/enemy pools - based on SGDK implementation
+ * Note: Moved to fighters.c
  */
-
 
 /**
  * Initialize star field for parallax scrolling background
@@ -663,76 +641,18 @@ static void handle_input(void)
 
 /**
  * Update player ship position, rotation, and physics
+ * Note: Moved to player.c
  */
-
 
 /**
  * Update all active bullets and check collisions
+ * Note: Moved to bullets.c
  */
-static void update_bullets(void)
-{
-    for (uint8_t i = 0; i < MAX_BULLETS; i++) {
-        if (bullets[i].status < 0) {
-            // Move sprite offscreen when inactive
-            unsigned ptr = BULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-            continue;  // Bullet is inactive
-        }
-        
-        // Check collision with fighters before moving
-        if (check_bullet_fighter_collision(bullets[i].x, bullets[i].y, &player_score, &game_score)) {
-            // Hit! Remove bullet
-            bullets[i].status = -1;
-            
-            // Move bullet sprite offscreen
-            unsigned ptr = BULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-            
-            goto next_bullet;  // Skip rest of bullet update
-        }
-        
-        // Get velocity components based on bullet direction
-        int16_t bvx = -sin_fix[bullets[i].status];
-        int16_t bvy = -cos_fix[bullets[i].status];
-        
-        // Apply velocity with fixed-point math (divide by 64 for bullet speed)
-        int16_t bvx_applied = (bvx + bullets[i].vx_rem) >> 6;
-        int16_t bvy_applied = (bvy + bullets[i].vy_rem) >> 6;
-        
-        // Update remainder
-        bullets[i].vx_rem = bvx + bullets[i].vx_rem - (bvx_applied << 6);
-        bullets[i].vy_rem = bvy + bullets[i].vy_rem - (bvy_applied << 6);
-        
-        // Update bullet position
-        bullets[i].x += bvx_applied;
-        bullets[i].y += bvy_applied;
-        
-        // Check if bullet is still on screen
-        if (bullets[i].x > 0 && bullets[i].x < SCREEN_WIDTH && 
-            bullets[i].y > 0 && bullets[i].y < SCREEN_HEIGHT) {
-            // Update sprite hardware position
-            unsigned ptr = BULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, bullets[i].x);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, bullets[i].y);
-        } else {
-            // Bullet went off screen, deactivate it
-            bullets[i].status = -1;
-            // Move sprite offscreen
-            unsigned ptr = BULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-        }
-        
-    next_bullet:
-        continue;
-    }
-}
 
 /**
  * Update all active enemy fighters - based on MySegaGame SGDK implementation
  * Fighters chase the player and fire bullets
+ * Note: Moved to fighters.c
  */
 
 
@@ -1231,7 +1151,6 @@ int main(void)
         // Update cooldown timers
         decrement_bullet_cooldown();
         decrement_ebullet_cooldown();
-        if (sbullet_cooldown > 0) sbullet_cooldown--;
         
         // Enemy bullet system
         fire_ebullet();

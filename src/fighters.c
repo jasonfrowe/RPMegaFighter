@@ -433,7 +433,7 @@ bool check_bullet_fighter_collision(int16_t bullet_x, int16_t bullet_y,
                 active_fighter_count--;
                 
                 // Award points based on current level
-                *player_score_out += game_level;
+                *player_score_out += 1;
                 *game_score_out += game_level;
                 
                 return true;
