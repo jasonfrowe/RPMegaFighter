@@ -45,7 +45,7 @@
 // Bullet properties
 #define MAX_BULLETS         8
 #define BULLET_COOLDOWN     8
-#define MAX_EBULLETS        8     // Enemy bullets
+#define MAX_EBULLETS        16     // Enemy bullets
 #define EBULLET_COOLDOWN    8
 #define INITIAL_EBULLET_COOLDOWN 10  // Starting cooldown for enemy bullets
 #define MIN_EBULLET_COOLDOWN     1   // Minimum cooldown (difficulty cap)
@@ -111,8 +111,9 @@ typedef struct {
 #define PSG_WAVE_TRIANGLE 3
 #define PSG_WAVE_NOISE    4
 
-// PSG memory location in XRAM
-#define PSG_XRAM_ADDR 0x0100
+// PSG memory location in XRAM (high memory, safe from graphics)
+// Use upper XRAM at 0xFF00 (well away from all graphics data)
+#define PSG_XRAM_ADDR 0xFF00
 
 // Sound effect types (for round-robin allocation)
 #define SFX_TYPE_PLAYER_FIRE   0
@@ -970,7 +971,7 @@ static void update_fighters(void)
             // Collision! Fighter dies, player takes damage
             fighters[i].status = 0;
             active_fighter_count--;
-            enemy_score++;  // Enemy gets a point for hitting player
+            enemy_score += 2;  // Enemy gets 2 points for player crash
             
             // Play deep crash sound effect
             play_sound(SFX_TYPE_PLAYER_HIT, 60, PSG_WAVE_NOISE, 0, 1, 6, 0);
@@ -1866,7 +1867,22 @@ int main(void)
         if (enemy_score >= SCORE_TO_WIN) {
             // Enemy wins - game over
             show_game_over();
-            game_over = true;
+            
+            // Restart the game
+            game_level = 1;
+            player_score = 0;
+            enemy_score = 0;
+            game_score = 0;
+            max_ebullet_cooldown = INITIAL_EBULLET_COOLDOWN;
+            
+            // Reinitialize fighters
+            init_fighters();
+            
+            // Clear the entire screen
+            clear_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+            
+            // Redraw HUD with reset scores
+            draw_hud();
         }
     }
     
