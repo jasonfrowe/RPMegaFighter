@@ -118,12 +118,25 @@ typedef struct {
 // Sound effect types (for round-robin allocation)
 #define SFX_TYPE_PLAYER_FIRE   0
 #define SFX_TYPE_ENEMY_FIRE    1
-#define SFX_TYPE_ENEMY_HIT     2
-#define SFX_TYPE_PLAYER_HIT    3
-#define SFX_TYPE_COUNT         4
+#define SFX_TYPE_COUNT         2
 
 // Channel allocation (2 channels per effect type for round-robin)
-static uint8_t next_channel[SFX_TYPE_COUNT] = {0, 2, 4, 6};
+static uint8_t next_channel[SFX_TYPE_COUNT] = {0, 2};
+
+// ============================================================================
+// HIGH SCORE SYSTEM
+// ============================================================================
+
+#define MAX_HIGH_SCORES 10
+#define HIGH_SCORE_NAME_LEN 3
+#define HIGH_SCORE_FILE "HIGHSCOR.DAT"
+
+typedef struct {
+    char name[HIGH_SCORE_NAME_LEN + 1];  // 3 chars + null terminator
+    int16_t score;
+} HighScore;
+
+static HighScore high_scores[MAX_HIGH_SCORES];
 
 // ============================================================================
 // GLOBAL GAME STATE
@@ -217,6 +230,143 @@ static inline void get_velocity_from_rotation(uint8_t rotation, int16_t* vx_out,
     // sin_fix[0] = 0, cos_fix[0] = 255
     *vx_out = -sin_fix[rotation];  // Negative because screen X increases right
     *vy_out = -cos_fix[rotation];  // Negative because screen Y increases down
+}
+
+// Forward declarations
+static void draw_text(int16_t x, int16_t y, const char* text, uint8_t color);
+static void clear_rect(int16_t x, int16_t y, int16_t width, int16_t height);
+
+/**
+ * Initialize high scores with default values
+ */
+static void init_high_scores(void)
+{
+    for (uint8_t i = 0; i < MAX_HIGH_SCORES; i++) {
+        high_scores[i].name[0] = 'A';
+        high_scores[i].name[1] = 'A';
+        high_scores[i].name[2] = 'A';
+        high_scores[i].name[3] = '\0';
+        high_scores[i].score = (MAX_HIGH_SCORES - i) * 10;  // 100, 90, 80, ...
+    }
+}
+
+/**
+ * Load high scores from file
+ * Returns true if loaded successfully, false if file doesn't exist
+ */
+static bool load_high_scores(void)
+{
+    FILE* fp = fopen(HIGH_SCORE_FILE, "rb");
+    if (!fp) {
+        printf("High score file not found, initializing defaults\n");
+        init_high_scores();
+        return false;
+    }
+    
+    size_t read = fread(high_scores, sizeof(HighScore), MAX_HIGH_SCORES, fp);
+    fclose(fp);
+    
+    if (read != MAX_HIGH_SCORES) {
+        printf("Error reading high scores, initializing defaults\n");
+        init_high_scores();
+        return false;
+    }
+    
+    printf("Loaded %d high scores from file\n", MAX_HIGH_SCORES);
+    return true;
+}
+
+/**
+ * Save high scores to file
+ */
+static void save_high_scores(void)
+{
+    FILE* fp = fopen(HIGH_SCORE_FILE, "wb");
+    if (!fp) {
+        printf("Error: Could not open high score file for writing\n");
+        return;
+    }
+    
+    fwrite(high_scores, sizeof(HighScore), MAX_HIGH_SCORES, fp);
+    fclose(fp);
+    printf("High scores saved\n");
+}
+
+/**
+ * Check if score qualifies for high score list
+ * Returns the position (0-9) if it qualifies, -1 otherwise
+ */
+static int8_t check_high_score(int16_t score)
+{
+    for (uint8_t i = 0; i < MAX_HIGH_SCORES; i++) {
+        if (score > high_scores[i].score) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/**
+ * Insert a new high score at the given position
+ * Shifts lower scores down
+ */
+static void insert_high_score(int8_t position, const char* name, int16_t score)
+{
+    if (position < 0 || position >= MAX_HIGH_SCORES) return;
+    
+    // Shift scores down
+    for (int8_t i = MAX_HIGH_SCORES - 1; i > position; i--) {
+        high_scores[i] = high_scores[i - 1];
+    }
+    
+    // Insert new score
+    strncpy(high_scores[position].name, name, HIGH_SCORE_NAME_LEN);
+    high_scores[position].name[HIGH_SCORE_NAME_LEN] = '\0';
+    high_scores[position].score = score;
+}
+
+/**
+ * Display high scores on screen
+ */
+static void draw_high_scores(void)
+{
+    const uint8_t yellow_color = 0xE3;  // Yellow
+    const uint8_t white_color = 0xFF;
+    const uint16_t start_x = 210;
+    const uint16_t start_y = 40;
+    
+    // Draw title
+    draw_text(start_x, start_y, "HIGH SCORES", yellow_color);
+    
+    // Draw each score
+    for (uint8_t i = 0; i < MAX_HIGH_SCORES; i++) {
+        uint16_t y = start_y + 15 + (i * 8);
+        
+        // Draw rank number
+        char rank[3];
+        if (i == 9) {
+            rank[0] = '1';
+            rank[1] = '0';
+            rank[2] = '\0';
+        } else {
+            rank[0] = '1' + i;
+            rank[1] = '\0';
+        }
+        draw_text(start_x, y, rank, white_color);
+        
+        // Draw name
+        draw_text(start_x + 10, y, high_scores[i].name, white_color);
+        
+        // Draw score (5 digits)
+        char score_buf[6];
+        score_buf[0] = '0' + (high_scores[i].score / 10000) % 10;
+        score_buf[1] = '0' + (high_scores[i].score / 1000) % 10;
+        score_buf[2] = '0' + (high_scores[i].score / 100) % 10;
+        score_buf[3] = '0' + (high_scores[i].score / 10) % 10;
+        score_buf[4] = '0' + high_scores[i].score % 10;
+        score_buf[5] = '\0';
+        draw_text(start_x + 30, y, score_buf, white_color);
+    }
 }
 
 /**
@@ -541,6 +691,7 @@ static void init_game(void)
     game_frame = 0;
     game_paused = false;
     game_over = false;
+    start_button_pressed = false;  // Reset to prevent immediate pause after title screen
     
     // Reset player position and state
     player_x = SCREEN_WIDTH_D2;
@@ -643,6 +794,9 @@ static void display_pause_message(bool show_paused)
         for (uint16_t y = center_y + 1; y < center_y + 11; y++) {
             set(center_x + 67, y, pause_color);
         }
+        
+        // Draw "PUSH A+C TO EXIT" below PAUSED
+        draw_text(center_x - 10, center_y + 20, "PUSH A+C TO EXIT", pause_color);
     } else {
         // Clear PAUSED text by drawing black
         for (uint16_t x = center_x; x < center_x + 68; x++) {
@@ -650,6 +804,9 @@ static void display_pause_message(bool show_paused)
                 set(x, y, 0x00);
             }
         }
+        
+        // Clear "PUSH A+C TO EXIT" text
+        clear_rect(center_x - 10, center_y + 20, 90, 5);
     }
 }
 
@@ -849,9 +1006,6 @@ static void update_bullets(void)
                     // Hit! Remove bullet and fighter
                     bullets[i].status = -1;
                     
-                    // Play explosion sound effect (noise crash)
-                    play_sound(SFX_TYPE_ENEMY_HIT, 80, PSG_WAVE_NOISE, 0, 2, 5, 1);
-                    
                     // Clear tractor beam if fighter was attacking (status == 2)
                     if (fighters[f].status == 2) {
                         // TODO: Clear line at lx1, ly1, lx2, ly2
@@ -972,9 +1126,6 @@ static void update_fighters(void)
             fighters[i].status = 0;
             active_fighter_count--;
             enemy_score += 2;  // Enemy gets 2 points for player crash
-            
-            // Play deep crash sound effect
-            play_sound(SFX_TYPE_PLAYER_HIT, 60, PSG_WAVE_NOISE, 0, 1, 6, 0);
             
             continue;
         }
@@ -1569,12 +1720,231 @@ static void show_level_up(void)
 }
 
 /**
+ * Get player initials for high score entry
+ */
+static void get_player_initials(char* name)
+{
+    const uint8_t yellow_color = 0xE3;
+    const uint8_t white_color = 0xFF;
+    const uint16_t center_x = 100;
+    const uint16_t center_y = 100;
+    
+    name[0] = 'A';
+    name[1] = 'A';
+    name[2] = 'A';
+    name[3] = '\0';
+    
+    uint8_t current_char = 0;  // Which character we're editing (0-2)
+    uint8_t vsync_last = RIA.vsync;
+    bool up_pressed = false;
+    bool down_pressed = false;
+    bool fire_pressed = false;
+    uint8_t blink_counter = 0;  // Counter for blinking (0.1s = 6 frames at 60 FPS)
+    bool blink_state = false;   // Current blink state
+    
+    draw_text(center_x - 20, center_y - 15, "NEW HIGH SCORE!", yellow_color);
+    draw_text(center_x - 20, center_y, "ENTER INITIALS:", yellow_color);
+    
+    printf("\nNEW HIGH SCORE! Enter your initials\n");
+    
+    // Wait for all buttons to be released before starting
+    while (true) {
+        if (RIA.vsync == vsync_last)
+            continue;
+        vsync_last = RIA.vsync;
+        
+        // Read input
+        RIA.addr0 = KEYBOARD_INPUT;
+        RIA.step0 = 2;
+        keystates[0] = RIA.rw0;
+        RIA.step0 = 1;
+        keystates[2] = RIA.rw0;
+        
+        RIA.addr0 = GAMEPAD_INPUT;
+        RIA.step0 = 1;
+        for (uint8_t i = 0; i < GAMEPAD_COUNT; i++) {
+            gamepad[i].dpad = RIA.rw0;
+            gamepad[i].sticks = RIA.rw0;
+            gamepad[i].btn0 = RIA.rw0;
+            gamepad[i].btn1 = RIA.rw0;
+            gamepad[i].lx = RIA.rw0;
+            gamepad[i].ly = RIA.rw0;
+            gamepad[i].rx = RIA.rw0;
+            gamepad[i].ry = RIA.rw0;
+            gamepad[i].l2 = RIA.rw0;
+            gamepad[i].r2 = RIA.rw0;
+        }
+        
+        // Check if all fire buttons are released
+        bool any_button_pressed = key(KEY_SPACE) || 
+                                  (gamepad[0].btn0 & 0x04) ||  // A
+                                  (gamepad[0].btn0 & 0x02) ||  // B
+                                  (gamepad[0].btn0 & 0x20);    // C
+        
+        if (!any_button_pressed) {
+            break;  // All buttons released, can start entering initials
+        }
+    }
+    
+    while (current_char < 3) {
+        if (RIA.vsync == vsync_last)
+            continue;
+        vsync_last = RIA.vsync;
+        
+        // Read input
+        RIA.addr0 = KEYBOARD_INPUT;
+        RIA.step0 = 2;
+        keystates[0] = RIA.rw0;
+        RIA.step0 = 1;
+        keystates[2] = RIA.rw0;
+        
+        RIA.addr0 = GAMEPAD_INPUT;
+        RIA.step0 = 1;
+        for (uint8_t i = 0; i < GAMEPAD_COUNT; i++) {
+            gamepad[i].dpad = RIA.rw0;
+            gamepad[i].sticks = RIA.rw0;
+            gamepad[i].btn0 = RIA.rw0;
+            gamepad[i].btn1 = RIA.rw0;
+            gamepad[i].lx = RIA.rw0;
+            gamepad[i].ly = RIA.rw0;
+            gamepad[i].rx = RIA.rw0;
+            gamepad[i].ry = RIA.rw0;
+            gamepad[i].l2 = RIA.rw0;
+            gamepad[i].r2 = RIA.rw0;
+        }
+        
+        // Update blink counter (0.1s = 6 frames at 60 FPS)
+        blink_counter++;
+        if (blink_counter >= 6) {
+            blink_counter = 0;
+            blink_state = !blink_state;
+        }
+        
+        // Clear the name area before redrawing to avoid character overlap
+        clear_rect(center_x + 10, center_y + 15, 16, 10);
+        
+        // Display current name with current character blinking
+        for (uint8_t i = 0; i < 3; i++) {
+            char letter[2] = {name[i], '\0'};
+            uint8_t color;
+            
+            if (i == current_char) {
+                // Current character blinks between yellow and white
+                color = blink_state ? white_color : yellow_color;
+            } else {
+                // Other characters stay yellow
+                color = yellow_color;
+            }
+            
+            draw_text(center_x + 10 + (i * 4), center_y + 15, letter, color);
+        }
+        
+        // Highlight current character with underscore
+        char underscore[2] = "_";
+        draw_text(center_x + 10 + (current_char * 4), center_y + 20, underscore, yellow_color);
+        
+        // Handle up/down to change letter (support both DPAD and stick inputs)
+        bool up_now = key(KEY_UP) || 
+                      (gamepad[0].dpad & GP_DPAD_UP) || 
+                      (gamepad[0].sticks & GP_LSTICK_UP);
+        bool down_now = key(KEY_DOWN) || 
+                        (gamepad[0].dpad & GP_DPAD_DOWN) || 
+                        (gamepad[0].sticks & GP_LSTICK_DOWN);
+        
+        if (up_now && !up_pressed) {
+            name[current_char]++;
+            if (name[current_char] > 'Z') name[current_char] = 'A';
+        }
+        up_pressed = up_now;
+        
+        if (down_now && !down_pressed) {
+            name[current_char]--;
+            if (name[current_char] < 'A') name[current_char] = 'Z';
+        }
+        down_pressed = down_now;
+        
+        // Handle fire to move to next character
+        bool fire_now = key(KEY_SPACE) || 
+                       (gamepad[0].btn0 & 0x04) ||  // A
+                       (gamepad[0].btn0 & 0x02);    // B
+        
+        if (fire_now && !fire_pressed) {
+            // Clear underscore
+            clear_rect(center_x + 10 + (current_char * 4), center_y + 20, 4, 5);
+            current_char++;
+        }
+        fire_pressed = fire_now;
+    }
+    
+    printf("Initials entered: %s\\n", name);
+    
+    // Clear the entry screen
+    clear_rect(center_x - 20, center_y - 15, 130, 40);
+}
+
+/**
  * Display game over screen and wait for fire button
  */
 static void show_game_over(void)
 {
     const uint8_t red_color = 0x03;
     const uint16_t center_x = 100;
+    
+    // Move all active fighters offscreen
+    for (uint8_t i = 0; i < MAX_FIGHTERS; i++) {
+        if (fighters[i].status > 0) {
+            unsigned ptr = FIGHTER_CONFIG + i * sizeof(vga_mode4_sprite_t);
+            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
+            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
+            fighters[i].status = 0;
+        }
+    }
+    
+    // Move all bullets offscreen
+    for (uint8_t i = 0; i < MAX_BULLETS; i++) {
+        if (bullets[i].status >= 0) {
+            unsigned ptr = BULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
+            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
+            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
+            bullets[i].status = -1;
+        }
+    }
+    
+    // Move all enemy bullets offscreen
+    for (uint8_t i = 0; i < MAX_EBULLETS; i++) {
+        if (ebullets[i].status >= 0) {
+            unsigned ptr = EBULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
+            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
+            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
+            ebullets[i].status = -1;
+        }
+    }
+    
+    // Reset player position to center
+    player_x = SCREEN_WIDTH_D2;
+    player_y = SCREEN_HEIGHT_D2;
+    player_vx = 0;
+    player_vy = 0;
+    player_thrust_x = 0;
+    player_thrust_y = 0;
+    
+    // Update player sprite position
+    xram0_struct_set(SPACECRAFT_CONFIG, vga_mode4_asprite_t, x_pos_px, player_x);
+    xram0_struct_set(SPACECRAFT_CONFIG, vga_mode4_asprite_t, y_pos_px, player_y);
+    
+    // Check if player got a high score
+    int8_t high_score_pos = check_high_score(game_score);
+    if (high_score_pos >= 0) {
+        // Get player initials
+        char initials[4];
+        get_player_initials(initials);
+        
+        // Insert into high score table
+        insert_high_score(high_score_pos, initials, game_score);
+        
+        // Save to file
+        save_high_scores();
+    }
     
     // Draw "GAME OVER" message
     draw_text(center_x, 70, "GAME OVER", red_color);
@@ -1627,6 +1997,14 @@ static void show_game_over(void)
         } else if (fire_button_released) {
             // Fire button pressed after being released
             printf("Fire button pressed - continuing...\n");
+            
+            // Clear screen before returning to title screen
+            RIA.addr0 = 0;
+            RIA.step0 = 1;
+            for (unsigned i = vlen; i--;) {
+                RIA.rw0 = 0;
+            }
+            
             return;
         }
         
@@ -1664,6 +2042,9 @@ static void show_title_screen(void)
     draw_text(center_x, 70, "FIGHTER", red_color);
     draw_text(center_x, 85, "CHALLENGE", blue_color);
     
+    // Draw high scores on right side
+    draw_high_scores();
+    
     uint8_t vsync_last = RIA.vsync;
     uint16_t flash_counter = 0;
     bool press_start_visible = true;
@@ -1672,6 +2053,9 @@ static void show_title_screen(void)
     
     // Draw initial "PRESS START" text
     draw_text(center_x - 20, 110, "PRESS START", red_color);
+    
+    // Draw exit instruction
+    draw_text(center_x - 30, 130, "PUSH A+C TO EXIT", blue_color);
     
     printf("Title screen displayed. Press START to begin...\n");
     
@@ -1719,12 +2103,46 @@ static void show_title_screen(void)
                         RIA.rw0 = 0;
                     }
                     printf("START pressed - beginning game!\n");
+                    
+                    // Wait for START button to be released before exiting
+                    while (true) {
+                        if (RIA.vsync == vsync_last)
+                            continue;
+                        vsync_last = RIA.vsync;
+                        
+                        RIA.addr0 = GAMEPAD_INPUT;
+                        RIA.step0 = 1;
+                        for (uint8_t i = 0; i < GAMEPAD_COUNT; i++) {
+                            gamepad[i].dpad = RIA.rw0;
+                            gamepad[i].sticks = RIA.rw0;
+                            gamepad[i].btn0 = RIA.rw0;
+                            gamepad[i].btn1 = RIA.rw0;
+                            gamepad[i].lx = RIA.rw0;
+                            gamepad[i].ly = RIA.rw0;
+                            gamepad[i].rx = RIA.rw0;
+                            gamepad[i].ry = RIA.rw0;
+                            gamepad[i].l2 = RIA.rw0;
+                            gamepad[i].r2 = RIA.rw0;
+                        }
+                        
+                        // Exit loop when START button is released
+                        if (!(gamepad[0].btn1 & 0x02)) {
+                            break;
+                        }
+                    }
+                    
                     return;  // Exit title screen
                 }
             } else {
                 // Button is not pressed
                 start_button_was_pressed = false;
             }
+        }
+        
+        // Check for A+C buttons pressed together to exit (0x04 + 0x20 = 0x24)
+        if ((gamepad[0].btn0 & 0x04) && (gamepad[0].btn0 & 0x20)) {
+            printf("A+C pressed - exiting...\n");
+            exit(0);
         }
         
         // Check for ESC to exit game
@@ -1760,10 +2178,12 @@ int main(void)
     printf("\n=== RPMegaFighter ===\n");
     printf("Port of Mega Super Fighter Challenge to RP6502\n\n");
     
-    // Initialize systems
+    // Initialize systems (one time only)
     init_graphics();
     init_psg();
-    init_game();
+    
+    // Load high scores from file
+    load_high_scores();
     
     // Enable keyboard input
     xregn(0, 0, 0, 1, KEYBOARD_INPUT);
@@ -1776,19 +2196,25 @@ int main(void)
     printf("  Gamepad:  Left stick to rotate/thrust, A/B to fire\n");
     printf("  ESC to quit, START to pause\n\n");
     
-    // Show title screen and wait for START
-    show_title_screen();
-    
-    printf("Starting game loop...\n\n");
-    
     uint8_t vsync_last = RIA.vsync;
     
-    // Main game loop
-    while (!game_over) {
-        // Wait for vertical sync (60 Hz)
-        if (RIA.vsync == vsync_last)
-            continue;
-        vsync_last = RIA.vsync;
+    // Main game loop - includes title screen and gameplay
+    while (true) {
+        // Show title screen and wait for START
+        show_title_screen();
+        
+        // Initialize/reset game state
+        init_game();
+        
+        printf("Starting game loop...\n\n");
+        
+        // Gameplay loop
+        game_over = false;
+        while (!game_over) {
+            // Wait for vertical sync (60 Hz)
+            if (RIA.vsync == vsync_last)
+                continue;
+            vsync_last = RIA.vsync;
         
         // Read input
         handle_input();
@@ -1868,24 +2294,14 @@ int main(void)
             // Enemy wins - game over
             show_game_over();
             
-            // Restart the game
-            game_level = 1;
-            player_score = 0;
-            enemy_score = 0;
-            game_score = 0;
-            max_ebullet_cooldown = INITIAL_EBULLET_COOLDOWN;
-            
-            // Reinitialize fighters
-            init_fighters();
-            
-            // Clear the entire screen
-            clear_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-            
-            // Redraw HUD with reset scores
-            draw_hud();
+            // Set flag to exit gameplay loop and return to title screen
+            game_over = true;
         }
     }
+    // Gameplay loop ended - will return to title screen
+    }
     
+    // Should never reach here unless ESC pressed
     printf("\nExiting game...\n");
     printf("Final Level: %d\n", game_level);
     printf("Final Score: %d\n", game_score);
