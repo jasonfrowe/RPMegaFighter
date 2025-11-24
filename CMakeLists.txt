@@ -37,6 +37,7 @@ target_sources(rpmegafighter PRIVATE
     src/bullets.c
     src/sbullets.c
     src/sound.c
+    src/music.c
     src/bkgstars.c
     src/pause.c
     src/title_screen.c

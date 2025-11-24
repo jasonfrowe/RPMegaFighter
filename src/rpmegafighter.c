@@ -24,6 +24,7 @@
 #include "bullets.h"
 #include "sbullets.h"
 #include "sound.h"
+#include "music.h"
 #include "bkgstars.h"
 #include "pause.h"
 #include "title_screen.h"
@@ -498,6 +499,7 @@ int main(void)
     // Initialize systems (one time only)
     init_graphics();
     init_psg();
+    init_music();
     
     // Load high scores from file
     load_high_scores();
@@ -523,6 +525,9 @@ int main(void)
         // Initialize/reset game state
         init_game();
         
+        // Start gameplay music
+        start_gameplay_music();
+        
         printf("Starting game loop...\n\n");
         
         // Gameplay loop
@@ -539,18 +544,36 @@ int main(void)
         // Check for ESC key to exit
         if (key(KEY_ESC)) {
             printf("Exiting game...\n");
+            stop_music();
             break;
         }
         
+        // Handle pause state and music
+        static bool was_paused = false;
+        bool currently_paused = is_game_paused();
+        
+        if (currently_paused && !was_paused) {
+            // Just paused - stop music
+            stop_music();
+        } else if (!currently_paused && was_paused) {
+            // Just resumed - restart music
+            start_gameplay_music();
+        }
+        was_paused = currently_paused;
+        
         // Skip updates if paused
-        if (is_game_paused()) {
+        if (currently_paused) {
             // Check for A+C buttons pressed together to exit
             if (check_pause_exit()) {
                 printf("\nA+C pressed - Exiting game...\n");
+                stop_music();
                 break;
             }
             continue;
         }
+        
+        // Update music
+        update_music();
         
         // Update cooldown timers
         decrement_bullet_cooldown();
@@ -610,6 +633,7 @@ int main(void)
         
         if (enemy_score >= SCORE_TO_WIN) {
             // Enemy wins - game over
+            stop_music();  // Stop gameplay music
             show_game_over();
             
             // Set flag to exit gameplay loop and return to title screen

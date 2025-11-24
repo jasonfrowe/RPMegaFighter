@@ -16,6 +16,9 @@ extern int8_t check_high_score(int16_t score);
 extern void get_player_initials(char* initials);
 extern void insert_high_score(int8_t position, const char* initials, int16_t score);
 extern void save_high_scores(void);
+extern void start_end_music(void);
+extern void update_music(void);
+extern void stop_music(void);
 
 extern int16_t game_level;
 extern int16_t game_score;
@@ -95,6 +98,9 @@ void show_game_over(void)
     const uint8_t red_color = 0x03;
     const uint16_t center_x = 100;
     
+    // Start end music
+    start_end_music();
+    
     // Move all active fighters offscreen
     move_fighters_offscreen();
     
@@ -145,6 +151,9 @@ void show_game_over(void)
             continue;
         vsync_last = RIA.vsync;
         
+        // Update music
+        update_music();
+        
         // Read gamepad input
         RIA.addr0 = GAMEPAD_INPUT;
         RIA.step0 = 1;
@@ -179,6 +188,9 @@ void show_game_over(void)
         } else if (fire_button_released) {
             // Fire button pressed after being released
             printf("Fire button pressed - continuing...\n");
+            
+            // Stop end music before returning to title screen
+            stop_music();
             
             // Clear screen before returning to title screen
             RIA.addr0 = 0;

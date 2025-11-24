@@ -1,6 +1,7 @@
 #include "title_screen.h"
 #include "screen.h"
 #include "sbullets.h"
+#include "music.h"
 #include <rp6502.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +52,9 @@ void show_title_screen(void)
     // Clear any remaining bullets from previous game
     init_sbullets();
     
+    // Start title music
+    start_title_music();
+    
     // Clear screen
     RIA.addr0 = 0;
     RIA.step0 = 1;
@@ -89,6 +93,9 @@ void show_title_screen(void)
             continue;
         vsync_last = RIA.vsync;
         
+        // Update music
+        update_music();
+        
         // Read input
         RIA.addr0 = KEYBOARD_INPUT;
         RIA.step0 = 2;
@@ -118,6 +125,8 @@ void show_title_screen(void)
                 if (!start_button_was_pressed) {
                     // This is a new press (edge detection)
                     start_button_was_pressed = true;
+                    // Stop music
+                    stop_music();
                     // Clear entire screen before exiting
                     RIA.addr0 = 0;
                     RIA.step0 = 1;
