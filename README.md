@@ -26,8 +26,9 @@ backward or slow down.
 
 **Weapons and Abilities**
 - **A Button:** Main gun (primary weapon).
-- **B Button:** Main gun (primary weapon).
-- **C Button:** Spread gun (slow fire rate, additional firepower).
+- **B Button:** Spread gun (slow fire rate, additional firepower).
+
+Press **START** to PAUSE the game.
 
 **Points:**
 - Destroying basic enemy ships grants 1 point.
@@ -63,13 +64,13 @@ Your fighter is equipped the
 all the tools necessary to
 survive wave after wave
 of enemies.
-Use the **B** button to fire
+Use the **A** button to fire
 your automatic primary
 weapon. With its high rate of
 fire, it is very effective against
 fighters at close and far range.
 
-The **C** button fires a spread shot of 3 projectiles.
+The **B** button fires a spread shot of 3 projectiles.
 It is very effective against close-by enemies and
 enemies travelling in packs. It has a much slower
 rate of fire.
