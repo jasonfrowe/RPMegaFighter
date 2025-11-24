@@ -119,8 +119,15 @@ bool is_action_pressed(uint8_t player_id, GameAction action)
     ButtonMapping* mapping = &button_mappings[player_id][action];
     
     // Check keyboard (player 0 only for now)
-    if (player_id == 0 && key(mapping->keyboard_key)) {
-        return true;
+    if (player_id == 0) {
+        if (key(mapping->keyboard_key)) {
+            return true;
+        }
+    }
+    
+    // Only check gamepad if one is connected
+    if (!(gamepad[player_id].dpad & GP_CONNECTED)) {
+        return false;
     }
     
     // Check gamepad
