@@ -89,7 +89,7 @@ growing hordes of enemies in hopes of achieving
 victory.
 
 ## Technical Details
-- **Platform:** Picocomputer 6502
+- **Platform:** [Picocomputer 6502](https://picocomputer.github.io/)
 - **Developer:** Jason Rowe
   - email: jason@jasonrowe.org
 - **Release Date:** Alpha - 2025-11-22
