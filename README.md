@@ -17,15 +17,16 @@ Press **START** to begin the game.
 
 **Controls:**
 
-You select your control style at the Title Screen.
-Hit **RESET** on the console if you want to change
-your control scheme
-
 **D-Pad Control R** (rotational style):
 - **Up**: Move ship forward.
 - **Left/Right**: Rotate direction of the ship.
 - **Down**: Activate reverse engines to move
 backward or slow down.
+
+**Weapons and Abilities**
+- **A Button:** Main gun (primary weapon).
+- **B Button:** Main gun (primary weapon).
+- **C Button:** Spread gun (slow fire rate, additional firepower).
 
 **Points:**
 - Destroying basic enemy ships grants 1 point.
@@ -66,6 +67,11 @@ your automatic primary
 weapon. With its high rate of
 fire, it is very effective against
 fighters at close and far range.
+
+The **C** button fires a spread shot of 3 projectiles.
+It is very effective against close-by enemies and
+enemies travelling in packs. It has a much slower
+rate of fire.
 
 ## Levels
 As you progress through levels, the difficulty
