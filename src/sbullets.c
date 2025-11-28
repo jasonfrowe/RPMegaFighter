@@ -27,10 +27,6 @@ extern int16_t game_score;
 extern int16_t player_x;
 extern int16_t player_y;
 
-// World offset
-extern int16_t world_offset_x;
-extern int16_t world_offset_y;
-
 // Sprite configuration addresses
 extern unsigned SBULLET_CONFIG;
 

@@ -46,8 +46,6 @@ extern int16_t player_x;
 extern int16_t player_y;
 extern int16_t player_vx_applied;
 extern int16_t player_vy_applied;
-extern int16_t world_offset_x;
-extern int16_t world_offset_y;
 
 // Scores (defined in `rpmegafighter.c`)
 extern int16_t player_score;
