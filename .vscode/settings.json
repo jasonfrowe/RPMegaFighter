@@ -10,6 +10,9 @@
         "-DLLVM_MOS_PLATFORM=rp6502"
     ],
     "cmake.options.advanced": {
+        "launchTarget": {
+            "statusBarVisibility": "visible"
+        },
         "launch": {
             "statusBarVisibility": "hidden"
         },
