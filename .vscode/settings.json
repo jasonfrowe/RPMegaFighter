@@ -1,0 +1,21 @@
+{
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "cmake.showSystemKits": false,
+    "cmake.preferredGenerators": [
+        "Ninja",
+        "Unix Makefiles"
+    ],
+    "cmake.configureArgs": [
+        "-DCMAKE_PREFIX_PATH=/Users/rowe/Software/rp6502/llvm-mos",
+        "-DLLVM_MOS_PLATFORM=rp6502"
+    ],
+    "cmake.options.advanced": {
+        "launch": {
+            "statusBarVisibility": "hidden"
+        },
+        "debug": {
+            "statusBarVisibility": "hidden"
+        }
+    },
+    "C_Cpp.errorSquiggles": "disabled"
+}
