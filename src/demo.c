@@ -11,6 +11,7 @@
 #include "music.h"
 #include "usb_hid_keys.h"
 #include "random.h"
+#include "text.h"
 #include <rp6502.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -98,10 +99,19 @@ void run_demo(void)
     reset_music_tempo();
     start_gameplay_music();
 
+    // draw_text(SCREEN_WIDTH / 2 - 23, 10, "DEMO MODE", 1);
+    // draw_text(SCREEN_WIDTH / 2 - 63, SCREEN_HEIGHT - 10, "PRESS ENTER, ESC, OR B TO EXIT", 1);
+
     uint8_t vsync_last = RIA.vsync;
 
     int abort_count = 0;
     unsigned frames = 0;
+    bool enter_was_down = false;
+    bool esc_was_down = false;
+    bool b_was_down = false;
+    // Color cycling for demo text
+    const uint8_t demo_colors[] = {1, 2, 3, 4, 5, 6, 7};
+    const uint8_t num_demo_colors = sizeof(demo_colors) / sizeof(demo_colors[0]);
     while (frames < DEMO_DURATION_FRAMES) {
         // Wait for vertical sync — only advance `frames` when a new
         // vsync is observed so CPU spin loops do not count as frames.
@@ -133,28 +143,42 @@ void run_demo(void)
             gamepad[i].r2 = RIA.rw0;
         }
 
-        // Detect any input (keyboard or gamepad). Ignore keyboard sentinel 0xFF
-        // and ignore gamepad connected bit (GP_CONNECTED) — match title-screen behavior.
+        // Debug: print gamepad and keyboard state
+        // extern void debug_print(const char* fmt, ...); // Add this prototype if not present
+        // debug_print("[DEMO] dpad=%02X keystates[0]=%02X\n", gamepad[0].dpad, keystates[0]);
+
+        // On-screen debug: show first 4 keystates as hex
+        // char debug_str[32];
+        // snprintf(debug_str, sizeof(debug_str), "K:%02X %02X %02X %02X", keystates[0], keystates[1], keystates[2], keystates[3]);
+        // printf("[DEMO] Frame %u: K:%02X %02X %02X %02X GP0 Dpad:%02X Btn0:%02X\n",
+        //        frames,
+        //        keystates[0], keystates[1], keystates[2], keystates[3],
+        //        gamepad[0].dpad,
+        //        gamepad[0].btn0);       
+        // draw_text(0, 0, debug_str, 1); // color 1 (adjust as needed)
+
+        /*
+        // Detect any keyboard input (ignore gamepad for demo exit)
         bool any_input = false;
-        // Check keyboard
         for (uint8_t i = 0; i < KEYBOARD_BYTES; i++) {
             if (keystates[i] && keystates[i] != 0xFF) { any_input = true; break; }
         }
-        // Check gamepad 0 quickly
-        if (!any_input) {
-            if (gamepad[0].dpad != 0xFF) {
-                uint8_t gp_dpad_raw = gamepad[0].dpad;
-                uint8_t gp_dpad = gp_dpad_raw & ~GP_CONNECTED; // ignore connected bit
-                if (gp_dpad || gamepad[0].sticks || gamepad[0].btn0 || gamepad[0].btn1) {
-                    any_input = true;
-                }
-            }
-        }
-
         if (any_input) {
             // Player hit input — exit demo immediately and return to title.
             break;
         }
+        */
+        // Only allow Enter, Esc, or Gamepad B to exit demo mode, but only on key/button release
+        bool enter_down = (keystates[KEY_ENTER >> 3] & (1 << (KEY_ENTER & 7))) != 0;
+        bool esc_down = (keystates[KEY_ESC >> 3] & (1 << (KEY_ESC & 7))) != 0;
+        bool b_down = (gamepad[0].btn0 & GP_BTN_B) != 0;
+        // Exit only if any was down and is now released
+        if ((enter_was_down && !enter_down) || (esc_was_down && !esc_down) || (b_was_down && !b_down)) {
+            break;
+        }
+        enter_was_down = enter_down;
+        esc_was_down = esc_down;
+        b_was_down = b_down;
 
         // Update music
         update_music();
@@ -176,7 +200,14 @@ void run_demo(void)
         update_bullets();
         update_sbullets();
         update_ebullets();
-        
+
+        // Update demo text color and text only every 20 frames
+        if ((frames % 20) == 0) {
+            uint8_t demo_color = demo_colors[(frames / 20) % num_demo_colors];
+            draw_text(SCREEN_WIDTH / 2 - 23, 10, "DEMO MODE", demo_color);
+            draw_text(SCREEN_WIDTH / 2 - 63, SCREEN_HEIGHT - 10, "PRESS ENTER, ESC, OR B TO EXIT", demo_color);
+        }
+
         // Render frame
         render_game();
         draw_hud();

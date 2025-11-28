@@ -188,47 +188,22 @@ void show_title_screen(void)
             start_button_was_pressed = false;
         }
 
-        // Idle/demo detection: if no input (keyboard or gamepad) increment idle counter
-        bool any_input = false;
-        // Check keyboard state: ignore all-0xFF sentinel (no keyboard present)
-        bool keyboard_all_ff = true;
-        for (uint8_t i = 0; i < KEYBOARD_BYTES; i++) {
-            if (keystates[i] != 0xFF) keyboard_all_ff = false;
-            if (keystates[i] && keystates[i] != 0xFF) { any_input = true; break; }
-        }
-        // Check gamepad 0 quickly; treat 0xFF as disconnected/unreliable
-        if (!any_input) {
-            if (gamepad[0].dpad != 0xFF) {
-                uint8_t gp_dpad_raw = gamepad[0].dpad;
-                uint8_t gp_dpad = gp_dpad_raw & ~GP_CONNECTED; // ignore connected bit
-                if (gp_dpad || gamepad[0].sticks || gamepad[0].btn0 || gamepad[0].btn1) {
-                    any_input = true;
-                }
-            }
-        }
-
-        if (any_input) {
+        // Demo countdown: always increment and start demo after timeout
+        idle_frames++;
+        if (idle_frames >= DEMO_IDLE_FRAMES) {
+            run_demo();
+            // After demo returns, redraw title elements and reset idle counter
+            start_title_music();
+            draw_text(center_x, 40, "MEGA", red_color);
+            draw_text(center_x, 55, "SUPER", red_color);
+            draw_text(center_x, 70, "FIGHTER", red_color);
+            draw_text(center_x, 85, "CHALLENGE", blue_color);
+            draw_high_scores();
+            draw_text(center_x - 20, 110, "PRESS START", red_color);
+            draw_text(center_x - 30, 130, "PUSH A+Y TO EXIT", blue_color);
             idle_frames = 0;
-        } else {
-            idle_frames++;
-            if (idle_frames >= DEMO_IDLE_FRAMES) {
-                // Run demo mode (blocks until demo ends or user input)
-                run_demo();
-                // After demo returns, redraw title elements and reset idle counter
-                start_title_music();
-                draw_text(center_x, 40, "MEGA", red_color);
-                draw_text(center_x, 55, "SUPER", red_color);
-                draw_text(center_x, 70, "FIGHTER", red_color);
-                draw_text(center_x, 85, "CHALLENGE", blue_color);
-                draw_high_scores();
-                draw_text(center_x - 20, 110, "PRESS START", red_color);
-                draw_text(center_x - 30, 130, "PUSH A+Y TO EXIT", blue_color);
-                idle_frames = 0;
-            }
         }
 
-        /* Idle debug removed after verification. */
-        
         // Check for A+Y buttons pressed together to exit
         if ((gamepad[0].btn0 & GP_BTN_A) && (gamepad[0].btn0 & GP_BTN_Y)) {
             printf("A+Y pressed - exiting...\n");

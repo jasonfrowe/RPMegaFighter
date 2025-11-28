@@ -14,7 +14,7 @@ endif()
 
 add_executable(rpmegafighter)
  # Prefer size-optimized compilation for this embedded project
- target_compile_options(rpmegafighter PRIVATE -Os)
+target_compile_options(rpmegafighter PRIVATE -Os)
 rp6502_asset(rpmegafighter 0x1E100 images/spaceship2.bin)
 rp6502_asset(rpmegafighter 0x1E180 images/Earth.bin)
 rp6502_asset(rpmegafighter 0x1E980 images/enemy1.bin)
