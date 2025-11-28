@@ -43,7 +43,6 @@ typedef struct {
 // Game state from main
 extern int16_t player_x, player_y;
 extern int16_t player_vx_applied, player_vy_applied;
-extern int16_t world_offset_x, world_offset_y;
 extern int16_t scroll_dx, scroll_dy;
 extern int16_t enemy_score;
 extern int16_t game_level;
@@ -165,8 +164,8 @@ void update_fighters(void)
 
 
         
-        fighters[i].x -= world_offset_x;
-        fighters[i].y -= world_offset_y;
+        fighters[i].x -= scroll_dx;
+        fighters[i].y -= scroll_dy;
 
         if (fighters[i].x + 4 > player_x && fighters[i].x < player_x + 8 &&
             fighters[i].y + 4 > player_y && fighters[i].y < player_y + 8) {
@@ -238,29 +237,24 @@ void fire_ebullet(void)
     // ebullet_cooldown = max_ebullet_cooldown;
     ebullet_cooldown = NEBULLET_TIMER_MAX;
     
-    int16_t player_world_x = player_x + world_offset_x;
-    int16_t player_world_y = player_y + world_offset_y;
-    
     if (ebullets[current_ebullet_index].status < 0) {
         for (uint8_t i = 0; i < MAX_FIGHTERS; i++) {
             if (fighters[i].status == 1) {  // A single ship is ready to fire
-                int16_t screen_x = fighters[i].x - world_offset_x;
-                int16_t screen_y = fighters[i].y - world_offset_y;
-                
-                if (screen_x > 0 && screen_x < SCREEN_WIDTH - 4 &&
-                    screen_y > 0 && screen_y < SCREEN_HEIGHT - 4) {
-                    
-                    int16_t fdx = player_world_x - fighters[i].x;
-                    int16_t fdy = -(player_world_y - fighters[i].y);
+
+                if (fighters[i].x > 0 && fighters[i].x < SCREEN_WIDTH - 4 &&
+                    fighters[i].y > 0 && fighters[i].y < SCREEN_HEIGHT - 4) {
+
+                    int16_t fdx = player_x - fighters[i].x;
+                    int16_t fdy = -(player_y - fighters[i].y);
                     int16_t distance = abs(fdx) + abs(fdy);
                     
                     if (distance > 0) {
                         int16_t tti_frames = distance / 4;
                         if (tti_frames == 0) tti_frames = 1;
                         
-                        int16_t pre_player_x = player_world_x + 4 + (player_vx_applied * tti_frames);
-                        int16_t pre_player_y = player_world_y + 4 + (player_vy_applied * tti_frames);
-                        
+                        int16_t pre_player_x = player_x + 4 + (player_vx_applied * tti_frames);
+                        int16_t pre_player_y = player_y + 4 + (player_vy_applied * tti_frames);
+
                         fdx = pre_player_x - fighters[i].x;
                         fdy = -pre_player_y + fighters[i].y;
                         
@@ -276,15 +270,15 @@ void fire_ebullet(void)
                         }
                         
                         ebullets[current_ebullet_index].status = best_index;
-                        ebullets[current_ebullet_index].x = screen_x;
-                        ebullets[current_ebullet_index].y = screen_y;
+                        ebullets[current_ebullet_index].x = fighters[i].x;
+                        ebullets[current_ebullet_index].y = fighters[i].y;
                         ebullets[current_ebullet_index].vx_rem = 0;
                         ebullets[current_ebullet_index].vy_rem = 0;
                         
                         unsigned bullet_ptr = EBULLET_CONFIG + current_ebullet_index * sizeof(vga_mode4_sprite_t);
-                        xram0_struct_set(bullet_ptr, vga_mode4_sprite_t, x_pos_px, screen_x);
-                        xram0_struct_set(bullet_ptr, vga_mode4_sprite_t, y_pos_px, screen_y);
-                        
+                        xram0_struct_set(bullet_ptr, vga_mode4_sprite_t, x_pos_px, fighters[i].x);
+                        xram0_struct_set(bullet_ptr, vga_mode4_sprite_t, y_pos_px, fighters[i].y);
+
                         play_sound(SFX_TYPE_ENEMY_FIRE, 440, PSG_WAVE_TRIANGLE, 0, 4, 3, 2);
                         
                         fighters[i].status = 2;
@@ -373,8 +367,6 @@ void render_fighters(void)
 {
     for (uint8_t i = 0; i < MAX_FIGHTERS; i++) {
         if (fighters[i].status > 0) {
-            // int16_t screen_x = fighters[i].x - world_offset_x;
-            // int16_t screen_y = fighters[i].y - world_offset_y;
             
             unsigned ptr = FIGHTER_CONFIG + i * sizeof(vga_mode4_sprite_t);
 
@@ -417,8 +409,8 @@ bool check_bullet_fighter_collision(int16_t bullet_x, int16_t bullet_y,
 {
     for (uint8_t f = 0; f < MAX_FIGHTERS; f++) {
         if (fighters[f].status > 0) {
-            int16_t fighter_screen_x = fighters[f].x - world_offset_x;
-            int16_t fighter_screen_y = fighters[f].y - world_offset_y;
+            int16_t fighter_screen_x = fighters[f].x - scroll_dx;
+            int16_t fighter_screen_y = fighters[f].y - scroll_dy;
             
             if (bullet_x >= fighter_screen_x - 2 && bullet_x < fighter_screen_x + 6 &&
                 bullet_y >= fighter_screen_y - 2 && bullet_y < fighter_screen_y + 6) {

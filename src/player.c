@@ -347,7 +347,7 @@ void update_player(bool demomode)
     
     if (new_y > BOUNDARY_Y && new_y < (SCREEN_HEIGHT - BOUNDARY_Y)) {
         player_y = new_y;
-        scroll_dy = 0;
+        scroll_dy = 0;      // Note that scroll_dy and world_offset_y are the same.  so get rid of world_offset_y (same for x above)
         world_offset_y = 0;
     } else {
         scroll_dy = new_y - player_y;
