@@ -394,7 +394,7 @@ void fire_bullet(void)
         xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, bullets[current_bullet_index].x);
         xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, bullets[current_bullet_index].y);
         
-        play_sound(SFX_TYPE_PLAYER_FIRE, 110, PSG_WAVE_SQUARE, 0, 3, 4, 0);
+        play_sound(SFX_TYPE_PLAYER_FIRE, 110, PSG_WAVE_SQUARE, 0, 3, 4, 2);
         
         current_bullet_index++;
         if (current_bullet_index >= MAX_BULLETS) {

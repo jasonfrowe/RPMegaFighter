@@ -323,7 +323,7 @@ void fire_ebullet(void)
                         xram0_struct_set(bullet_ptr, vga_mode4_sprite_t, x_pos_px, fighters[i].x);
                         xram0_struct_set(bullet_ptr, vga_mode4_sprite_t, y_pos_px, fighters[i].y);
 
-                        play_sound(SFX_TYPE_ENEMY_FIRE, 440, PSG_WAVE_TRIANGLE, 0, 4, 3, 2);
+                        play_sound(SFX_TYPE_ENEMY_FIRE, 440, PSG_WAVE_TRIANGLE, 0, 4, 3, 3);
                         
                         fighters[i].status = 2;
                         

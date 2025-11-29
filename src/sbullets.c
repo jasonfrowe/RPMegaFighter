@@ -109,7 +109,7 @@ bool fire_sbullet(uint8_t player_rotation)
     sbullets[2].vy_rem = 0;
     
     // Play sound effect
-    play_sound(SFX_TYPE_PLAYER_FIRE, 880, PSG_WAVE_SQUARE, 0, 3, 2, 2);
+    play_sound(SFX_TYPE_PLAYER_FIRE, 880, PSG_WAVE_SQUARE, 0, 3, 2, 3);
     
     return true;
 }
