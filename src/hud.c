@@ -165,17 +165,20 @@ void draw_hud(void)
         RIA.rw0 = 0xE0;
         RIA.rw0 = 0x00;
     }
+
+    // Write level digits: compute byte address in text RAM (3 bytes per char)
+    // Move level display further right by 15 chars to align with message layout
+    const int level_index = enemy_index + 13 + 12; // character index where level digits live
+    unsigned level_addr = text_message_addr + level_index * 3;
+    RIA.addr0 = level_addr;
+    RIA.step0 = 1;
+    char level_buf[2];
+    level_buf[0] = '0' + (game_level / 10) % 10;
+    level_buf[1] = '0' + game_level % 10;
+    for (uint8_t k = 0; k < 2; ++k) {
+        RIA.rw0 = level_buf[k];
+        RIA.rw0 = 0xE0;
+        RIA.rw0 = 0x00;
+    }
     
-    // // Draw level indicator at bottom of screen
-    // const uint16_t level_y = 170;
-    
-    // // Clear level area before drawing (wider to cover both text and number)
-    // clear_rect(10, level_y, 50, 5);
-    
-    // draw_text(10, level_y, "LEVEL", text_color);
-    // char level_buf[3];
-    // level_buf[0] = '0' + (game_level / 10) % 10;
-    // level_buf[1] = '0' + game_level % 10;
-    // level_buf[2] = '\0';
-    // draw_text(50, level_y, level_buf, text_color);
 }
