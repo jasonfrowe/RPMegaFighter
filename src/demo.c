@@ -141,32 +141,6 @@ void run_demo(void)
             gamepad[i].r2 = RIA.rw0;
         }
 
-        // Debug: print gamepad and keyboard state
-        // extern void debug_print(const char* fmt, ...); // Add this prototype if not present
-        // debug_print("[DEMO] dpad=%02X keystates[0]=%02X\n", gamepad[0].dpad, keystates[0]);
-
-        // On-screen debug: show first 4 keystates as hex
-        // char debug_str[32];
-        // snprintf(debug_str, sizeof(debug_str), "K:%02X %02X %02X %02X", keystates[0], keystates[1], keystates[2], keystates[3]);
-        // printf("[DEMO] Frame %u: K:%02X %02X %02X %02X GP0 Dpad:%02X Btn0:%02X\n",
-        //        frames,
-        //        keystates[0], keystates[1], keystates[2], keystates[3],
-        //        gamepad[0].dpad,
-        //        gamepad[0].btn0);       
-        // draw_text(0, 0, debug_str, 1); // color 1 (adjust as needed)
-
-        /*
-        // Detect any keyboard input (ignore gamepad for demo exit)
-        bool any_input = false;
-        for (uint8_t i = 0; i < KEYBOARD_BYTES; i++) {
-            if (keystates[i] && keystates[i] != 0xFF) { any_input = true; break; }
-        }
-        if (any_input) {
-            // Player hit input — exit demo immediately and return to title.
-            break;
-        }
-        */
-        // Only allow Enter, Esc, or Gamepad B to exit demo mode, but only on key/button release
         bool enter_down = (keystates[KEY_ENTER >> 3] & (1 << (KEY_ENTER & 7))) != 0;
         bool esc_down = (keystates[KEY_ESC >> 3] & (1 << (KEY_ESC & 7))) != 0;
         bool b_down = (gamepad[0].btn0 & GP_BTN_B) != 0;

@@ -569,8 +569,16 @@ void render_game(void)
 // MAIN GAME LOOP
 // ============================================================================
 
+// Demo mode parameters
 bool demo_mode_active = false;
 uint16_t demo_frames = 0;
+// Color cycling for demo text
+const uint8_t demo_colors[] = {1, 2, 3, 4, 5, 6, 7};
+const uint8_t num_demo_colors = sizeof(demo_colors) / sizeof(demo_colors[0]);
+// Previous key states for demo mode exit
+bool enter_was_down = false;
+bool esc_was_down = false;
+bool b_was_down = false;
 
 int main(void)
 {
@@ -702,6 +710,50 @@ int main(void)
             // Increment demo mode frame counter
             if (demo_mode_active) {
                 demo_frames++;
+
+                // Read input so we can exit demo early if the player provides input.
+                RIA.addr0 = KEYBOARD_INPUT;
+                RIA.step0 = 1;
+                for (uint8_t i = 0; i < KEYBOARD_BYTES; i++) {
+                    keystates[i] = RIA.rw0;
+                }
+
+                RIA.addr0 = GAMEPAD_INPUT;
+                RIA.step0 = 1;
+                for (uint8_t i = 0; i < GAMEPAD_COUNT; i++) {
+                    gamepad[i].dpad = RIA.rw0;
+                    gamepad[i].sticks = RIA.rw0;
+                    gamepad[i].btn0 = RIA.rw0;
+                    gamepad[i].btn1 = RIA.rw0;
+                    gamepad[i].lx = RIA.rw0;
+                    gamepad[i].ly = RIA.rw0;
+                    gamepad[i].rx = RIA.rw0;
+                    gamepad[i].ry = RIA.rw0;
+                    gamepad[i].l2 = RIA.rw0;
+                    gamepad[i].r2 = RIA.rw0;
+                }
+
+                bool enter_down = (keystates[KEY_ENTER >> 3] & (1 << (KEY_ENTER & 7))) != 0;
+                bool esc_down = (keystates[KEY_ESC >> 3] & (1 << (KEY_ESC & 7))) != 0;
+                bool b_down = (gamepad[0].btn0 & GP_BTN_B) != 0;
+                // Exit only if any was down and is now released
+                if ((enter_was_down && !enter_down) || (esc_was_down && !esc_down) || (b_was_down && !b_down)) {
+                    demo_mode_active = false;
+                    game_over = true;
+                    printf("Exiting demo mode due to player input\n");
+                }
+                enter_was_down = enter_down;
+                esc_was_down = esc_down;
+                b_was_down = b_down;
+
+
+                // Update demo text color and text only every 20 frames
+                if ((demo_frames % 20) == 0) {
+                    uint8_t demo_color = demo_colors[(demo_frames / 20) % num_demo_colors];
+                    draw_text(SCREEN_WIDTH / 2 - 23, 25, "DEMO MODE", demo_color);
+                    draw_text(SCREEN_WIDTH / 2 - 63, SCREEN_HEIGHT - 15, "PRESS ENTER, ESC, OR B TO EXIT", demo_color);
+                }
+
                 if (demo_frames >= DEMO_DURATION_FRAMES) {
                     // Exit demo mode after set frames
                     demo_mode_active = false;
