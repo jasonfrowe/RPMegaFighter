@@ -459,6 +459,9 @@ static void init_game(void)
     // Reset power-up state
     powerup.active = false;
     powerup.timer = 0;
+    // If not already, move power-up sprite offscreen
+    xram0_struct_set(POWERUP_CONFIG, vga_mode4_sprite_t, x_pos_px, -100);
+    xram0_struct_set(POWERUP_CONFIG, vga_mode4_sprite_t, y_pos_px, -100);
 
     printf("Game initialized\n");
 }

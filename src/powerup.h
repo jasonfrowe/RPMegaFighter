@@ -3,7 +3,7 @@
 
 #define POWERUP_DATA      0xEE80  // 8x8 Sprite Data (128 bytes) Ends at 0xEF00
 #define POWERUP_DURATION_FRAMES  (60 * 5) // Power-up lasts for 5 seconds
-#define POWERUP_DROP_CHANCE_PERCENT 5 // 5% chance to drop a power-up on fighter destruction
+#define POWERUP_DROP_CHANCE_PERCENT 1   // 1% chance to drop a power-up on fighter destruction
 
 // Single storage for the POWERUP_CONFIG symbol is provided in `rpmegafighter.c`.
 extern unsigned POWERUP_CONFIG;        //Power-up sprite config address

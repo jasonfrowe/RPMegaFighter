@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include "usb_hid_keys.h"
 #include "powerup.h"
+#include "sbullets.h"
 
 // External references
 extern void draw_text(int16_t x, int16_t y, const char* text, uint8_t color);
@@ -198,6 +199,8 @@ void show_game_over(void)
     
     // Move all active fighters offscreen
     move_fighters_offscreen();
+
+    move_sbullets_offscreen();
     
     // Move all bullets offscreen
     for (uint8_t i = 0; i < MAX_BULLETS; i++) {
