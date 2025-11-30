@@ -5,6 +5,7 @@
 #include <rp6502.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "sbullets.h"
 
 // ============================================================================
 // CONSTANTS
@@ -39,8 +40,8 @@ uint8_t current_bullet_index = 0;
 
 // Spread shot bullets (internal to this module for now)
 static Bullet sbullets[MAX_SBULLETS];
-static uint16_t sbullet_cooldown = 0;
-static uint8_t current_sbullet_index = 0;
+// static uint16_t sbullet_cooldown = 0;
+// static uint8_t current_sbullet_index = 0;
 
 // ============================================================================
 // FUNCTIONS

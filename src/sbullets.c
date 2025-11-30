@@ -44,10 +44,26 @@ extern bool check_bullet_fighter_collision(int16_t bullet_x, int16_t bullet_y,
 
 static SBullet sbullets[MAX_SBULLETS];
 static uint16_t sbullet_cooldown_timer = 0;
+static int16_t sbullet_lifetime_timer = 0;
+
+
+int16_t sbullet_cooldown;
 
 // ============================================================================
 // FUNCTIONS
 // ============================================================================
+
+void move_sbullets_offscreen(void)
+{
+    for (uint8_t i = 0; i < MAX_SBULLETS; i++) {
+        if (sbullets[i].status >= 0) {
+            sbullets[i].status = -1;
+            unsigned ptr = SBULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
+            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
+            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
+        }
+    }
+}
 
 void init_sbullets(void)
 {
@@ -59,6 +75,7 @@ void init_sbullets(void)
         sbullets[i].vy_rem = 0;
     }
     sbullet_cooldown_timer = 0;
+    sbullet_cooldown = SBULLET_COOLDOWN_MAX; // Initialize cooldown
 }
 
 bool fire_sbullet(uint8_t player_rotation)
@@ -70,13 +87,16 @@ bool fire_sbullet(uint8_t player_rotation)
     }
     
     // Check if all 3 bullets are available
-    if (sbullets[0].status >= 0 || sbullets[1].status >= 0 || sbullets[2].status >= 0) {
-        return false;
-    }
+    // if (sbullets[0].status >= 0 || sbullets[1].status >= 0 || sbullets[2].status >= 0) {
+    //     return false;
+    // }
     
     // Reset cooldown
-    sbullet_cooldown_timer = SBULLET_COOLDOWN_MAX;
-    
+    sbullet_cooldown_timer = sbullet_cooldown;
+
+    // Reset lifetime timer
+    sbullet_lifetime_timer = SBULLET_LIFETIME_FRAMES;
+
     // Fire 3 bullets: left (-1), center (0), right (+1) of player rotation
     int16_t start_x = player_x + 2;  // Center of player sprite (8x8 -> 4 pixels offset)
     int16_t start_y = player_y + 2;
@@ -116,9 +136,30 @@ bool fire_sbullet(uint8_t player_rotation)
 
 void update_sbullets(void)
 {
+    if (sbullet_cooldown_timer == 0) {
+        return;
+    }
+
     // Decrement cooldown timer
     if (sbullet_cooldown_timer > 0) {
         sbullet_cooldown_timer--;
+    }
+
+    // Decrement lifetime timer
+    if (sbullet_lifetime_timer > 1) {
+        sbullet_lifetime_timer--;
+    } else {
+        // Lifetime expired - deactivate all bullets
+        for (uint8_t i = 0; i < MAX_SBULLETS; i++) {
+            if (sbullets[i].status >= 0) {
+                sbullets[i].status = -1;
+                unsigned ptr = SBULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
+                xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
+                xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
+            }
+        }
+        sbullet_lifetime_timer = 0;
+        return;
     }
     
     for (uint8_t i = 0; i < MAX_SBULLETS; i++) {

@@ -6,6 +6,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "usb_hid_keys.h"
+#include "powerup.h"
+#include "sbullets.h"
 
 // External references
 extern void draw_text(int16_t x, int16_t y, const char* text, uint8_t color);
@@ -197,6 +199,8 @@ void show_game_over(void)
     
     // Move all active fighters offscreen
     move_fighters_offscreen();
+
+    move_sbullets_offscreen();
     
     // Move all bullets offscreen
     for (uint8_t i = 0; i < MAX_BULLETS; i++) {
@@ -213,6 +217,12 @@ void show_game_over(void)
     
     // Reset player position to center
     reset_player_position();
+
+    // reset power-up state
+    powerup.active = false;
+    // Move power-up sprite offscreen
+    xram0_struct_set(POWERUP_CONFIG, vga_mode4_sprite_t, x_pos_px, -100);
+    xram0_struct_set(POWERUP_CONFIG, vga_mode4_sprite_t, y_pos_px, -100);
     
     // Check if player got a high score
     int8_t high_score_pos = check_high_score(game_score);
@@ -239,7 +249,7 @@ void show_game_over(void)
     uint8_t vsync_last = RIA.vsync;
     bool fire_button_released = false;
     // Timeout for waiting for fire button
-    unsigned timeout_frames = 10 * 60; // 10 seconds at 60Hz
+    unsigned timeout_frames = 30 * 60; // 30 seconds at 60Hz
     unsigned frame_count = 0;
     // Wait for fire button
     while (true) {
