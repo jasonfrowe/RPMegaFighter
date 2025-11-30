@@ -21,4 +21,6 @@ extern powerup_t powerup;
 // Function declarations
 void render_powerup(void);
 
+void update_powerup(void);
+
 #endif // POWERUP_H

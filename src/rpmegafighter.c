@@ -455,7 +455,11 @@ static void init_game(void)
     // Reset Earth position
     earth_x = SCREEN_WIDTH / 2;
     earth_y = SCREEN_HEIGHT / 2;
-    
+
+    // Reset power-up state
+    powerup.active = false;
+    powerup.timer = 0;
+
     printf("Game initialized\n");
 }
 
@@ -717,6 +721,9 @@ int main(void)
             update_bullets();
             update_sbullets();
             update_ebullets();
+
+            // Update scrolling based on player movement
+            update_powerup();
             
             // Render frame
             render_game();
