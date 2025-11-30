@@ -29,11 +29,6 @@
 #define MIN_EBULLET_COOLDOWN     1   // Minimum cooldown (difficulty cap)
 #define EBULLET_COOLDOWN_DECREASE 5  // Decrease per level
 
-// Spread shot bullets
-#define MAX_SBULLETS         3        // Spread shot bullets
-#define SBULLET_COOLDOWN_MAX 120      // Frames between super bullet shots
-#define SBULLET_SPEED_SHIFT  6        // Divide by 64 for bullet speed (~4 pixels/frame)
-
 // Fighter properties
 #define MAX_FIGHTERS        32    // Maximum number of enemy fighters
 #define FIGHTER_SPAWN_RATE  128   // Frames between fighter spawns

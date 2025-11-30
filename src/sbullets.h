@@ -4,11 +4,19 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+
+// Spread shot bullets
+#define MAX_SBULLETS                3      // Spread shot bullets
+#define SBULLET_COOLDOWN_MAX      120      // Frames between super bullet shots
+#define SBULLET_COOLDOWN_MIN       30      // Minimum cooldown for super bullets
+#define SBULLET_COOLDOWN_DECREASE  10      // Decrease per power-up
+#define SBULLET_SPEED_SHIFT         6      // Divide by 64 for bullet speed (~4 pixels/frame)
+
 /**
  * sbullets.h - Player super bullet (spread shot) management system
  * 
  * Handles super bullet firing (3-bullet spread), movement, and collision detection
- * Fires when button C is pressed
+ * Fires when button C is pressed   
  */
 
 // Super bullet structure (same as regular bullets)
@@ -36,5 +44,8 @@ bool fire_sbullet(uint8_t player_rotation);
  * - Remove off-screen bullets
  */
 void update_sbullets(void);
+
+// Exposed cooldown value so other modules may read/set it
+extern int16_t sbullet_cooldown;
 
 #endif // SBULLETS_H

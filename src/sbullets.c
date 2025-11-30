@@ -45,6 +45,9 @@ extern bool check_bullet_fighter_collision(int16_t bullet_x, int16_t bullet_y,
 static SBullet sbullets[MAX_SBULLETS];
 static uint16_t sbullet_cooldown_timer = 0;
 
+
+int16_t sbullet_cooldown;
+
 // ============================================================================
 // FUNCTIONS
 // ============================================================================
@@ -59,6 +62,7 @@ void init_sbullets(void)
         sbullets[i].vy_rem = 0;
     }
     sbullet_cooldown_timer = 0;
+    sbullet_cooldown = SBULLET_COOLDOWN_MAX; // Initialize cooldown
 }
 
 bool fire_sbullet(uint8_t player_rotation)
@@ -75,8 +79,8 @@ bool fire_sbullet(uint8_t player_rotation)
     }
     
     // Reset cooldown
-    sbullet_cooldown_timer = SBULLET_COOLDOWN_MAX;
-    
+    sbullet_cooldown_timer = sbullet_cooldown;
+
     // Fire 3 bullets: left (-1), center (0), right (+1) of player rotation
     int16_t start_x = player_x + 2;  // Center of player sprite (8x8 -> 4 pixels offset)
     int16_t start_y = player_y + 2;

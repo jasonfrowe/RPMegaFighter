@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include "powerup.h"
 #include "player.h"
+#include "sbullets.h"
 
 powerup_t powerup = { .active = false, .timer = 0 };
 
@@ -36,11 +37,13 @@ void update_powerup(void)
         powerup.active = false;
         // Move power-up sprite offscreen
         xram0_struct_set(POWERUP_CONFIG, vga_mode4_sprite_t, x_pos_px, -100);
-        xram0_struct_set(POWERUP_CONFIG, vga_mode4_sprite_t, y_pos_px, -100); 
-        {
-            // Grant power-up effect to player (e.g., extra life, weapon upgrade)
-            // This is a placeholder; actual implementation depends on game design
+        xram0_struct_set(POWERUP_CONFIG, vga_mode4_sprite_t, y_pos_px, -100);
+
+        sbullet_cooldown -= SBULLET_COOLDOWN_DECREASE;
+        if (sbullet_cooldown < SBULLET_COOLDOWN_MIN) {
+            sbullet_cooldown = SBULLET_COOLDOWN_MIN;
         }
+
         return;
     }
 
