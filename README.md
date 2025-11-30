@@ -11,12 +11,12 @@ your mission is to destroy as many enemy ships
 as possible before they can obliterate you. The
 first player to reach 100 points triumphs in this
 high-intensity space shooter.
-Each level bring new challenges and new power-
+Each level brings new challenges and new power-
 ups.
 
 Press **START** to begin the game.
 
-**Controls:**
+## Controls
 
 **D-Pad Control R** (rotational style):
 - **Up**: Move ship forward.
@@ -27,15 +27,24 @@ backward or slow down.
 **Weapons and Abilities**
 - **A Button:** Main gun (primary weapon).
 - **X Button:** Spread gun (slow fire rate, limited range).
+- **START Button:** Pause the game.
 
-Press **START** to PAUSE the game.
+### Controller Configuration
+If the default controls do not suit your gamepad, you can remap them using the included helper program.
 
-**Points:**
-- Destroying basic enemy ships grants 1 point.
-- If the enemy shoots you, you get a point
-- If you crash into the enemy, the enemy get 2 points!
+1.  Run `gamepad_mapper.rp6502`.
+2.  Follow the on-screen prompts to press the specific buttons you wish to map to game actions.
+3.  Your settings are automatically saved to a file named `JOYSTICK.DAT`.
+4.  Run `rpmegafighter.rp6502`. The game will detect and load your custom configuration automatically.
 
-## Heads Up Display ##
+**To reset to default controls:** Simply delete the `JOYSTICK.DAT` file from your storage.
+
+## Points Strategy
+- Destroying basic enemy ships grants **1 point**.
+- If the enemy shoots you, you get **1 point** (survival bonus).
+- If you crash into the enemy, the enemy gets **2 points**!
+
+## Heads Up Display
 
 The game field HUD gives valuable information
 about game play and status. Player and Enemy
@@ -47,37 +56,29 @@ The game score and game level are also shown.
 Try to get the best score possible to impress your
 friends.
 
-## Enemies ##
+## Enemies
 
-Your basic enemy fighter.
-Harmless on its own, but
-can be overwhelming in
-large numbers. Fires a
-single shot towards the
-enemy. Moves in
-diagonal patterns
-across the screen towards your
-fighter craft.
+**Basic Fighter**
+Harmless on its own, but can be overwhelming in
+large numbers. Fires a single shot towards the
+player. Moves in diagonal patterns across the 
+screen towards your fighter craft.
 
-Your Space Fighter
-Your fighter is equipped the
-all the tools necessary to
-survive wave after wave
-of enemies.
-Use the **A** button to fire
-your automatic primary
-weapon. With its high rate of
-fire, it is very effective against
+**Your Space Fighter**
+Your fighter is equipped with all the tools necessary to
+survive wave after wave of enemies.
+Use the **A** button to fire your automatic primary
+weapon. With its high rate of fire, it is very effective against
 fighters at close and far range.
 
 The **X** button fires a spread shot of 3 projectiles.
 It is very effective against close-by enemies and
 enemies travelling in packs. It has a much slower
-rate of fire.  
+rate of fire.
 
 Look for **Power Ups** that appear after destroying enemies. 
 These power ups will enhance your weapon system to deal
-with the hoard of enemies.
+with the horde of enemies.
 
 ## Levels
 As you progress through levels, the difficulty
@@ -85,7 +86,7 @@ increases. Enemy ships become faster and more
 numerous, requiring superior piloting skills and
 strategic shooting. The ultimate challenge awaits
 in later levels with powerful alien commanders
-that demand precision and quick reflexes
+that demand precision and quick reflexes.
 
 ## Game Over
 If your spaceship is destroyed or you run out of
@@ -98,7 +99,7 @@ victory.
 - **Platform:** [Picocomputer 6502](https://picocomputer.github.io/)
 - **Developer:** Jason Rowe
   - email: jason@jasonrowe.org
-- **Release Date:** Alpha - 2025-11-22
+- **Release Date:** Alpha - 2025-11-29
 
 ## Build Option: ENABLE_INPUT_TEST
 
