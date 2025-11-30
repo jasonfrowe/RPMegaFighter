@@ -173,7 +173,7 @@ void reset_pause_state(void)
 bool check_pause_exit(void)
 {
     // Check for A+Y buttons pressed together to exit
-    if ((gamepad[0].btn0 & 0x01) && (gamepad[0].btn0 & 0x10)) {
+    if ((gamepad[0].btn0 & GP_BTN_A) && (gamepad[0].btn0 & GP_BTN_Y)) {
         return true;
     }
     return false;

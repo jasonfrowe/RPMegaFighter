@@ -303,9 +303,7 @@ void show_game_over(void)
         
         // Check if fire button is released first
         bool fire_pressed = key(KEY_SPACE) ||
-                           (gamepad[0].btn0 & 0x04) ||  // A
-                           (gamepad[0].btn0 & 0x02) ||  // B
-                           (gamepad[0].btn0 & 0x20);    // C
+                           (gamepad[0].btn0 & GP_BTN_B);    // C
         
         if (!fire_pressed) {
             fire_button_released = true;
