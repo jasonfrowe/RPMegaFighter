@@ -608,6 +608,8 @@ bool enter_was_down = false;
 bool esc_was_down = false;
 bool b_was_down = false;
 
+// init_input_system_test() was moved to input.c
+
 int main(void)
 {
     printf("\n=== RPMegaFighter ===\n");
@@ -626,6 +628,9 @@ int main(void)
     
     // Enable gamepad input
     xregn(0, 0, 2, 1, GAMEPAD_INPUT);
+
+    // Initialize input mappings (ensure `button_mappings` are set)
+    init_input_system();  // new function to set up input mappings
     
     printf("\nControls:\n");
     printf("  Keyboard: Arrow keys to rotate/thrust, SPACE/SHIFT to fire\n");
@@ -634,8 +639,13 @@ int main(void)
     
     uint8_t vsync_last = RIA.vsync;
     
+    
+
     // Main game loop - includes title screen and gameplay
     while (true) {
+        // Run the input test (non-destructive) then show title screen
+        init_input_system_test();
+
         // Show title screen and wait for START
         show_title_screen();
 

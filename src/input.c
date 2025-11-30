@@ -284,3 +284,76 @@ bool save_joystick_config(void)
     close(fd);
     return true;
 }
+
+/**
+ * Quick interactive input test: stays running until PAUSE action (START) is pressed.
+ * Reports mapped action press/release events for player 0 only.
+ */
+void init_input_system_test(void)
+{
+    printf("\nInput test mode: press mapped gamepad buttons to see actions.\n");
+    printf("Press START (mapped to PAUSE action) to finish the test.\n");
+
+    uint8_t vsync_last_test = RIA.vsync;
+
+    bool action_pressed[ACTION_COUNT];
+    for (uint8_t i = 0; i < ACTION_COUNT; i++) action_pressed[i] = false;
+
+    const char *action_names[ACTION_COUNT] = {
+        "THRUST",
+        "REVERSE_THRUST",
+        "ROTATE_LEFT",
+        "ROTATE_RIGHT",
+        "FIRE",
+        "SUPER_FIRE",
+        "PAUSE"
+    };
+
+    while (true) {
+        if (RIA.vsync == vsync_last_test)
+            continue;
+        vsync_last_test = RIA.vsync;
+
+        // Read gamepad data only
+        RIA.addr0 = GAMEPAD_INPUT;
+        RIA.step0 = 1;
+        for (uint8_t i = 0; i < GAMEPAD_COUNT; i++) {
+            gamepad[i].dpad = RIA.rw0;
+            gamepad[i].sticks = RIA.rw0;
+            gamepad[i].btn0 = RIA.rw0;
+            gamepad[i].btn1 = RIA.rw0;
+            gamepad[i].lx = RIA.rw0;
+            gamepad[i].ly = RIA.rw0;
+            gamepad[i].rx = RIA.rw0;
+            gamepad[i].ry = RIA.rw0;
+            gamepad[i].l2 = RIA.rw0;
+            gamepad[i].r2 = RIA.rw0;
+        }
+
+        // Check each mapped action for player 0 and report events
+        for (uint8_t action = 0; action < ACTION_COUNT; action++) {
+            ButtonMapping *m = &button_mappings[0][action];
+            uint8_t value = 0;
+            switch (m->gamepad_button) {
+                case 0: value = gamepad[0].dpad; break;
+                case 1: value = gamepad[0].sticks; break;
+                case 2: value = gamepad[0].btn0; break;
+                case 3: value = gamepad[0].btn1; break;
+                default: value = 0; break;
+            }
+
+            bool now = (value & m->gamepad_mask) != 0;
+            if (now && !action_pressed[action]) {
+                action_pressed[action] = true;
+                printf("Action %s pressed\n", action_names[action]);
+                if (action == ACTION_PAUSE) {
+                    printf("PAUSE action pressed — exiting input test.\n");
+                    return;
+                }
+            } else if (!now && action_pressed[action]) {
+                action_pressed[action] = false;
+                printf("Action %s released\n", action_names[action]);
+            }
+        }
+    }
+}

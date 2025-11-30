@@ -72,6 +72,9 @@ extern ButtonMapping button_mappings[GAMEPAD_COUNT][ACTION_COUNT];
 // Initialize input system with default button mappings
 void init_input_system(void);
 
+// Quick interactive input test: reports mapped action press/releases and exits on PAUSE
+void init_input_system_test(void);
+
 // Read keyboard and gamepad input
 void handle_input(void);
 
