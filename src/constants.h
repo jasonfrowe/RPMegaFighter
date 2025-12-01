@@ -120,7 +120,15 @@ extern unsigned BOMBER_CONFIG;      // Bomber Sprite (8x8)
 #define STARFIELD_Y 256
 // Size of World
 #define WORLD_X 1024 // Size of World (for wrapping of objects such as the Earth)
-#define WORLD_Y 512
+#define WORLD_Y 1024 
+#define WORLD_X2 512
+#define WORLD_Y2 512
+// Size of world for fighter wrapping
+#define FIGHTER_WORLD_X  1024
+#define FIGHTER_WORLD_Y  512
+#define FIGHTER_WORLD_X2 512
+#define FIGHTER_WORLD_Y2 256
+
 
 // Display properties
 // Screen dimensions (used by modules)

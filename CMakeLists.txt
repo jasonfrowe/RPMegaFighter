@@ -71,6 +71,7 @@ target_sources(rpmegafighter PRIVATE
     src/screens.c
     src/random.c
     src/powerup.c
+    src/bomber.c
 )
 
 # Gamepad test utility

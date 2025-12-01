@@ -31,6 +31,7 @@
 #include "input.h"
 #include "screens.h"
 #include "powerup.h"
+#include "bomber.h"
 
 // ============================================================================
 // XRAM MEMORY CONFIGURATION ADDRESSES
@@ -441,24 +442,6 @@ void render_game(void)
     earth_x -= scroll_dx;
     earth_y -= scroll_dy;
     
-    // Wrap Earth horizontally - same as stars
-    if (earth_x <= -30) {
-        earth_x += WORLD_X;
-    }
-    if (earth_x > WORLD_X - 30) {
-        earth_x -= WORLD_X;
-    }
-    
-    // Wrap Earth vertically - same as stars
-    if (earth_y <= -30) {
-        // When wrapping from top, place at bottom minus HUD offset
-        earth_y += WORLD_Y;
-    }
-    if (earth_y > WORLD_Y - 30) {
-        // When wrapping from bottom, place below HUD area
-        earth_y -= WORLD_Y;
-    }
-    
     xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, x_pos_px, earth_x);
     xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, y_pos_px, earth_y);
     
@@ -537,6 +520,8 @@ int main(void)
         
         // Start gameplay music
         start_gameplay_music();
+
+        spawn_bomber(game_level);
         
         printf("Starting game loop...\n\n");
         
@@ -648,6 +633,7 @@ int main(void)
             update_bullets();
             update_sbullets();
             update_ebullets();
+            update_bomber();
 
             // Update scrolling based on player movement
             update_powerup();
