@@ -67,15 +67,6 @@ typedef struct {
 } Fighter;
 
 // ============================================================================
-// SOUND SYSTEM - PSG
-// ============================================================================
-// Note: Moved to sound.c
-
-// ============================================================================
-// HIGH SCORE SYSTEM
-// ============================================================================
-
-// ============================================================================
 // GLOBAL GAME STATE
 // ============================================================================
 
@@ -101,31 +92,15 @@ int16_t game_level = 1;
 uint16_t game_frame = 0;    // Frame counter (0-59)
 static bool game_over = false;
 
-// Control mode (from SGDK version)
-static uint8_t control_mode = 0;   // 0 = rotational, 1 = directional
-
 // Bullet pools - now in bullets.c module
 extern Bullet bullets[MAX_BULLETS];
 extern uint8_t current_bullet_index;
 
-// Note: ebullets, fighters, and related state moved to fighters.c
-
-// Input state (keystates and start_button_pressed are in definitions.h)
-gamepad_t gamepad[GAMEPAD_COUNT];
+// Input state
+// gamepad_t gamepad[GAMEPAD_COUNT];
 
 // Storage for sprite config addresses referenced across modules
 unsigned POWERUP_CONFIG;
-
-// ============================================================================
-// SINE/COSINE LOOKUP TABLES (24 steps for rotation)
-// ============================================================================
-// The lookup tables are defined in definitions.h:
-// - sin_fix[25]: 255 * sin(theta) for 24 rotation angles (0-23) + wrap
-// - cos_fix[25]: 255 * cos(theta) for 24 rotation angles (0-23) + wrap  
-// - t2_fix4[25]: Affine transform offsets for sprite rotation
-//
-// These provide smooth rotation in 15-degree increments (360/24 = 15 degrees)
-// Values are scaled by 255 for fixed-point math without floating point
 
 // ============================================================================
 // ROTATION UTILITIES
@@ -163,35 +138,9 @@ static inline uint8_t normalize_rotation(int16_t rotation)
     }
     return rotation % SHIP_ROTATION_STEPS;
 }
-
 // ============================================================================
-// INITIALIZATION FUNCTIONS
+// GRAPHICS INITIALIZATION
 // ============================================================================
-
-/**
- * Initialize bullet pools - mark all bullets as inactive
- * Note: Moved to bullets.c
- */
-
-/**
- * Initialize fighter/enemy pools - based on SGDK implementation
- * Note: Moved to fighters.c
- */
-
-/**
- * Initialize star field for parallax scrolling background
- * Note: Moved to bkgstars.c
- */
-
-/**
- * Initialize PSG (Programmable Sound Generator)
- * Note: Moved to sound.c
- */
-
-/**
- * Initialize graphics system
- * Sets up bitmap mode for background and sprite mode for entities
- */
 static void init_graphics(void) 
 {
     // Set up bitmap configuration for background (VGA Mode 3)
@@ -485,66 +434,8 @@ static void init_game(void)
 }
 
 // ============================================================================
-// PAUSE SCREEN
-// ============================================================================
-
-/**
- * Display or clear the pause message on screen
- * Note: Moved to pause.c
- */
-
-// ============================================================================
-// INPUT HANDLING
-// ============================================================================
-
-/**
- * Read keyboard and gamepad input
- * Note: Moved to input.c
- */
-
-// ============================================================================
-// GAME LOGIC UPDATES
-// ============================================================================
-
-/**
- * Update player ship position, rotation, and physics
- * Note: Moved to player.c
- */
-
-/**
- * Update all active bullets and check collisions
- * Note: Moved to bullets.c
- */
-
-/**
- * Update all active enemy fighters - based on MySegaGame SGDK implementation
- * Fighters chase the player and fire bullets
- * Note: Moved to fighters.c
- */
-
-
-
-
-
-
-
-
-// ============================================================================
 // RENDERING
 // ============================================================================
-
-/**
- * Text rendering functions moved to text.c
- */
-
-/**
- * Update player sprite position and rotation
- */
-
-
-/**
- * Render all game entities
- */
 void render_game(void)
 {
     // Draw scrolling star background
@@ -589,29 +480,6 @@ void render_game(void)
 }
 
 // ============================================================================
-// GAME SCREENS
-// ============================================================================
-
-/**
- * Display level up message and wait briefly
- * Note: Moved to screens.c
- */
-
-/**
- * Display game over screen and wait for fire button
- * Note: Moved to screens.c
- */
-
-// ============================================================================
-// TITLE SCREEN
-// ============================================================================
-
-/**
- * Display title screen and wait for START button
- * Note: Moved to title_screen.c
- */
-
-// ============================================================================
 // MAIN GAME LOOP
 // ============================================================================
 
@@ -621,17 +489,13 @@ uint16_t demo_frames = 0;
 // Color cycling for demo text
 const uint8_t demo_colors[] = {1, 2, 3, 4, 5, 6, 7};
 const uint8_t num_demo_colors = sizeof(demo_colors) / sizeof(demo_colors[0]);
-// Previous key states for demo mode exit
-bool enter_was_down = false;
-bool esc_was_down = false;
-bool b_was_down = false;
 
 // init_input_system_test() was moved to input.c
 
 int main(void)
 {
     printf("\n=== RPMegaFighter ===\n");
-    printf("Port of Mega Super Fighter Challenge to RP6502\n\n");
+    printf("Mega Super Fighter Challenge for the RP6502\n\n");
     
     // Initialize systems (one time only)
     init_graphics();
@@ -652,7 +516,7 @@ int main(void)
     
     printf("\nControls:\n");
     printf("  Keyboard: Arrow keys to rotate/thrust, SPACE/SHIFT to fire\n");
-    printf("  Gamepad:  Left stick to rotate/thrust, A/B to fire\n");
+    printf("  Gamepad:  Left stick/ D-Pad to rotate/thrust, A/X to fire\n");
     printf("  ESC to quit, START to pause\n\n");
     
     uint8_t vsync_last = RIA.vsync;

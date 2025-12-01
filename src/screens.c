@@ -36,21 +36,7 @@ typedef struct {
 
 extern Bullet bullets[];
 
-// // Gamepad structure
-// typedef struct {
-//     uint8_t dpad;
-//     uint8_t sticks;
-//     uint8_t btn0;
-//     uint8_t btn1;
-//     int8_t lx;
-//     int8_t ly;
-//     int8_t rx;
-//     int8_t ry;
-//     uint8_t l2;
-//     uint8_t r2;
-// } gamepad_t;
-
-extern gamepad_t gamepad[GAMEPAD_COUNT];
+// extern gamepad_t gamepad[GAMEPAD_COUNT];
 extern uint8_t keystates[KEYBOARD_BYTES];
 
 // Key macro

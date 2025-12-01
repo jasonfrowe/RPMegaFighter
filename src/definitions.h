@@ -21,6 +21,17 @@ static char level_message[5] = "LEVEL";
 
 const uint16_t vlen = 57600; // Extended Memory space for bitmap graphics (320x180 @ 8-bits)
 
+// ============================================================================
+// SINE/COSINE LOOKUP TABLES (24 steps for rotation)
+// ============================================================================
+// The lookup tables are defined in definitions.h:
+// - sin_fix[25]: 255 * sin(theta) for 24 rotation angles (0-23) + wrap
+// - cos_fix[25]: 255 * cos(theta) for 24 rotation angles (0-23) + wrap  
+// - t2_fix4[25]: Affine transform offsets for sprite rotation
+//
+// These provide smooth rotation in 15-degree increments (360/24 = 15 degrees)
+// Values are scaled by 255 for fixed-point math without floating point
+
 // Pre-calulated Angles: 255*sin(theta)
 const int16_t sin_fix[] = {
     0, 65, 127, 180, 220, 246, 255, 246, 220, 180, 127, 65, 

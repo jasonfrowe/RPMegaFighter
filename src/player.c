@@ -19,8 +19,6 @@
 // EXTERNAL DEPENDENCIES
 // ============================================================================
 
-extern gamepad_t gamepad[GAMEPAD_COUNT];
-
 // Lookup tables from definitions.h
 extern const int16_t sin_fix[25];
 extern const int16_t cos_fix[25];

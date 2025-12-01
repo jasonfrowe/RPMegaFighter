@@ -10,7 +10,7 @@
 
 // External references
 extern void handle_pause_input(void);
-extern gamepad_t gamepad[GAMEPAD_COUNT];
+gamepad_t gamepad[GAMEPAD_COUNT];
 
 // Keyboard state (defined in definitions.h, but declared here)
 uint8_t keystates[KEYBOARD_BYTES] = {0};

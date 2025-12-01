@@ -17,9 +17,6 @@ extern void clear_rect(int16_t x, int16_t y, int16_t width, int16_t height);
 // High score data
 static HighScore high_scores[MAX_HIGH_SCORES];
 
-// External references from main game
-extern gamepad_t gamepad[GAMEPAD_COUNT];
-
 /**
  * Initialize high scores with default values
  */

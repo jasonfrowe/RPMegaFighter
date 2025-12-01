@@ -21,8 +21,6 @@ extern bool demo_mode_active;
 extern uint8_t keystates[KEYBOARD_BYTES];
 #define key(code) (keystates[code >> 3] & (1 << (code & 7)))
 
-extern gamepad_t gamepad[GAMEPAD_COUNT];
-
 void show_title_screen(void)
 {
     const uint8_t red_color = 0x03;      // Pure red
@@ -80,6 +78,8 @@ void show_title_screen(void)
         // Increment seed counter for randomness
         seed_counter++;
 
+        handle_input(); 
+
         // Update high score display periodically to rotate colours
         highscore_counter++;
         if (highscore_counter >= 15) {
@@ -89,42 +89,13 @@ void show_title_screen(void)
         
         // Update music
         update_music();
-        
-        // Read input
-        RIA.addr0 = KEYBOARD_INPUT;
-        RIA.step0 = 1;
-        for (uint8_t i = 0; i < KEYBOARD_BYTES; i++) {
-            keystates[i] = RIA.rw0;
-        }
-        
-        RIA.addr0 = GAMEPAD_INPUT;
-        RIA.step0 = 1;
-        for (uint8_t i = 0; i < GAMEPAD_COUNT; i++) {
-            gamepad[i].dpad = RIA.rw0;
-            gamepad[i].sticks = RIA.rw0;
-            gamepad[i].btn0 = RIA.rw0;
-            gamepad[i].btn1 = RIA.rw0;
-            gamepad[i].lx = RIA.rw0;
-            gamepad[i].ly = RIA.rw0;
-            gamepad[i].rx = RIA.rw0;
-            gamepad[i].ry = RIA.rw0;
-            gamepad[i].l2 = RIA.rw0;
-            gamepad[i].r2 = RIA.rw0;
-        }
-        
+                
         // Check for keyboard ENTER or gamepad START button to start game
         bool start_pressed = false;
-        
-        // // Check keyboard ENTER
-        // if (key(KEY_ENTER)) {
-        //     start_pressed = true;
-        // }
-        
+                
         // Check gamepad START button (BTN1 bit 0x08)
-        if (gamepad[0].dpad & GP_CONNECTED) {
-            if (is_action_pressed(0, ACTION_PAUSE)) {
-                start_pressed = true;
-            }
+        if (is_action_pressed(0, ACTION_PAUSE)) {
+            start_pressed = true;
         }
         
         // Handle start with edge detection
@@ -147,30 +118,9 @@ void show_title_screen(void)
                     if (RIA.vsync == vsync_last)
                         continue;
                     vsync_last = RIA.vsync;
-                    
-                    // Read keyboard
-                    RIA.addr0 = KEYBOARD_INPUT;
-                    RIA.step0 = 1;
-                    for (uint8_t i = 0; i < KEYBOARD_BYTES; i++) {
-                        keystates[i] = RIA.rw0;
-                    }
-                    
-                    // Read gamepad
-                    RIA.addr0 = GAMEPAD_INPUT;
-                    RIA.step0 = 1;
-                    for (uint8_t i = 0; i < GAMEPAD_COUNT; i++) {
-                        gamepad[i].dpad = RIA.rw0;
-                        gamepad[i].sticks = RIA.rw0;
-                        gamepad[i].btn0 = RIA.rw0;
-                        gamepad[i].btn1 = RIA.rw0;
-                        gamepad[i].lx = RIA.rw0;
-                        gamepad[i].ly = RIA.rw0;
-                        gamepad[i].rx = RIA.rw0;
-                        gamepad[i].ry = RIA.rw0;
-                        gamepad[i].l2 = RIA.rw0;
-                        gamepad[i].r2 = RIA.rw0;
-                    }
-                    
+
+                    handle_input(); 
+                                        
                     // Exit loop when both ENTER and START are released
                     if (!is_action_pressed(0, ACTION_PAUSE)) {
                         break;

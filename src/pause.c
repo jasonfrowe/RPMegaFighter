@@ -10,22 +10,6 @@
 extern void draw_text(uint16_t x, uint16_t y, const char *str, uint8_t colour);
 extern void clear_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
 
-// Gamepad structure and constants
-// typedef struct {
-//     uint8_t dpad;
-//     uint8_t sticks;
-//     uint8_t btn0;
-//     uint8_t btn1;
-//     int8_t lx;         // Signed for analog sticks
-//     int8_t ly;
-//     int8_t rx;
-//     int8_t ry;
-//     uint8_t l2;
-//     uint8_t r2;
-// } gamepad_t;
-
-extern gamepad_t gamepad[4];
-
 // Keyboard support
 extern uint8_t keystates[KEYBOARD_BYTES];
 #define key(code) (keystates[code >> 3] & (1 << (code & 7)))
@@ -135,10 +119,8 @@ void handle_pause_input(void)
     // }
     
     // Check gamepad START button (BTN1 bit 0x08)
-    if (gamepad[0].dpad & GP_CONNECTED) {
-        if (is_action_pressed(0, ACTION_PAUSE)) {
-            pause_button_pressed = true;
-        }
+    if (is_action_pressed(0, ACTION_PAUSE)) {
+        pause_button_pressed = true;
     }
     
     // Handle pause toggle with edge detection
