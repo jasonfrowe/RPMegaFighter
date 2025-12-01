@@ -1,6 +1,5 @@
 #include "fighters.h"
 #include "constants.h"
-#include "screen.h"
 #include "random.h"
 #include "sound.h"
 #include <rp6502.h>

@@ -5,7 +5,6 @@
 #include "highscore.h"
 #include "constants.h"
 #include "input.h"
-#include "usb_hid_keys.h"
 #include "music.h"
 #include <stdio.h>
 #include <string.h>

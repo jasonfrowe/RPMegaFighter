@@ -4,13 +4,12 @@
  * Based on RP6502-RIA gamepad specification
  */
 
-#include <rp6502.h>
+#include <rp6502.h> 
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include "definitions.h"
-#include "usb_hid_keys.h" 
 
 // Gamepad input structure
 static gamepad_t gamepad[GAMEPAD_COUNT];

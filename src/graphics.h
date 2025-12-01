@@ -1,7 +1,6 @@
 #ifndef GRAPHICS_H
 #define GRAPHICS_H
 
-#include "screen.h"
 #include "constants.h"
 #include <stdlib.h>
 

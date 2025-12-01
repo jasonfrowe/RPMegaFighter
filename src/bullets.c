@@ -1,6 +1,5 @@
 #include "bullets.h"
 #include "constants.h"
-#include "screen.h"
 #include "sound.h"
 #include <rp6502.h>
 #include <stdint.h>

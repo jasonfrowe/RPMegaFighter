@@ -1,6 +1,5 @@
 #include "constants.h"
 #include "pause.h"
-#include "screen.h"
 #include <rp6502.h>
 #include <stdio.h>
 #include "input.h"

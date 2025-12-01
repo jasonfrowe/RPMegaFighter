@@ -2,7 +2,6 @@
 #define BKGSTARS_H
 
 #include <stdint.h>
-#include "constants.h"
 
 // Initialize the background star field
 void init_stars(void);

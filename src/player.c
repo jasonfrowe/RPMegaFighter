@@ -1,11 +1,8 @@
 #include "player.h"
 #include "constants.h"
-#include "screen.h"
 #include "bullets.h"
-#include "sbullets.h"
 #include "sound.h"
 #include "input.h"
-#include "usb_hid_keys.h"
 #include "random.h"
 #include <rp6502.h>
 #include <stdint.h>

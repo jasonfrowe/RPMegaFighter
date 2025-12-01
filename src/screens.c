@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include "usb_hid_keys.h"
 #include "powerup.h"
 #include "sbullets.h"
 #include "input.h"
@@ -58,7 +57,7 @@ extern uint8_t keystates[KEYBOARD_BYTES];
 #define key(code) (keystates[code >> 3] & (1 << (code & 7)))
 
 // Sprite configuration addresses
-extern unsigned BULLET_CONFIG;
+// extern unsigned BULLET_CONFIG;
 
 /**
  * Display level up message and wait for START button

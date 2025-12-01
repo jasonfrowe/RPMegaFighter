@@ -12,10 +12,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "usb_hid_keys.h"
 #include "constants.h"
 #include "definitions.h"
-#include "screen.h"
 #include "random.h"
 #include "graphics.h"
 #include "highscore.h"
@@ -33,6 +31,21 @@
 #include "input.h"
 #include "screens.h"
 #include "powerup.h"
+
+// ============================================================================
+// XRAM MEMORY CONFIGURATION ADDRESSES
+// ============================================================================
+
+unsigned BITMAP_CONFIG;         //Bitmap Config 
+unsigned SPACECRAFT_CONFIG;     //Spacecraft Sprite Config - Affine 
+unsigned EARTH_CONFIG;          //Earth Sprite Config - Standard 
+unsigned STATION_CONFIG;        //Enemy station sprite config
+unsigned BATTLE_CONFIG;         //Enemy battle station sprite config 
+unsigned FIGHTER_CONFIG;        //Enemy fighter sprite config
+unsigned EBULLET_CONFIG;        //Enemy bullet sprite config
+unsigned BULLET_CONFIG;         //Player bullet sprite config
+unsigned SBULLET_CONFIG;        //Super bullet sprite config
+unsigned TEXT_CONFIG;           //On screen text configs
 
 // ============================================================================
 // GAME STRUCTURES

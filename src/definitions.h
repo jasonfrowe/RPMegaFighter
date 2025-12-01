@@ -6,30 +6,6 @@
 #include "constants.h"
 #include <string.h>
 
-//Sprite locations
-#define SPACESHIP_DATA  0xE100  //Spaceship Sprite (8x8)
-#define EARTH_DATA      0xE180  //Earth Sprite (32x32)
-#define FIGHTER_DATA    0xE980  //Enemy fighter Sprite (4x4)
-#define EBULLET_DATA    0xE9A0  //Enemy bullet Sprite (2x2)
-#define BULLET_DATA     0xE9A8  //Player bullet Sprite (2x2)
-#define SBULLET_DATA    0xE9B0  //Super bullet Sprite (4x4)
-
-// Update your next free spot
-#define EXTRA_SPRITES_START 0xEF10
-
-//XRAM Memory addresses
-#define VGA_CONFIG_START 0xEA20 //Start of graphic config addresses (after gamepad data)
-unsigned BITMAP_CONFIG;         //Bitmap Config 
-unsigned SPACECRAFT_CONFIG;     //Spacecraft Sprite Config - Affine 
-unsigned EARTH_CONFIG;          //Earth Sprite Config - Standard 
-unsigned STATION_CONFIG;        //Enemy station sprite config
-unsigned BATTLE_CONFIG;         //Enemy battle station sprite config 
-unsigned FIGHTER_CONFIG;        //Enemy fighter sprite config
-unsigned EBULLET_CONFIG;        //Enemy bullet sprite config
-unsigned BULLET_CONFIG;         //Player bullet sprite config
-unsigned SBULLET_CONFIG;        //Super bullet sprite config
-unsigned TEXT_CONFIG;           //On screen text configs
-
 // Text configs
 #define NTEXT 1
 unsigned text_message_addr;

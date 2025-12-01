@@ -23,6 +23,8 @@
     "C_Cpp.errorSquiggles": "disabled",
     "files.associations": {
         "highscore.h": "c",
-        "definitions.h": "c"
+        "definitions.h": "c",
+        "random.h": "c",
+        "fighters.h": "c"
     }
 }

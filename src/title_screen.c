@@ -1,6 +1,5 @@
 #include "title_screen.h"
 #include "constants.h"
-#include "screen.h"
 #include "sbullets.h"
 #include "music.h"
 #include <rp6502.h>
@@ -9,11 +8,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "graphics.h"
 #include "random.h"
-#include "usb_hid_keys.h"
 #include "input.h"
-// #include "demo.h"
 
 // External references
 extern void draw_text(uint16_t x, uint16_t y, const char *str, uint8_t colour);
@@ -21,20 +17,6 @@ extern void clear_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
 extern void draw_high_scores(void);
 extern const uint16_t vlen;
 extern bool demo_mode_active;
-
-// // Gamepad structure and constants
-// typedef struct {
-//     uint8_t dpad;
-//     uint8_t sticks;
-//     uint8_t btn0;
-//     uint8_t btn1;
-//     int8_t lx;         // Signed for analog sticks
-//     int8_t ly;
-//     int8_t rx;
-//     int8_t ry;
-//     uint8_t l2;
-//     uint8_t r2;
-// } gamepad_t;
 
 extern uint8_t keystates[KEYBOARD_BYTES];
 #define key(code) (keystates[code >> 3] & (1 << (code & 7)))

@@ -1,7 +1,5 @@
-#include <rp6502.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
+// #include <rp6502.h>
+#include <stdint.h>
 #include "random.h"
 
 // uint16_t random(uint16_t low_limit, uint16_t high_limit)
