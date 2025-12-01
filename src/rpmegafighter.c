@@ -93,42 +93,6 @@ uint16_t game_frame = 0;    // Frame counter (0-59)
 static bool game_over = false;
 
 // ============================================================================
-// ROTATION UTILITIES
-// ============================================================================
-
-/**
- * Get velocity components for a given rotation angle
- * @param rotation Rotation index (0-23)
- * @param vx_out Pointer to store X velocity component
- * @param vy_out Pointer to store Y velocity component
- * 
- * Example: rotation 0 = pointing up (negative Y direction)
- *          rotation 6 = pointing right (positive X direction)
- *          rotation 12 = pointing down (positive Y direction)
- *          rotation 18 = pointing left (negative X direction)
- */
-static inline void get_velocity_from_rotation(uint8_t rotation, int16_t* vx_out, int16_t* vy_out)
-{
-    // Ensure rotation is in valid range (0-23)
-    rotation = rotation % SHIP_ROTATION_STEPS;
-    
-    // For velocity: pointing "up" (rotation 0) should give negative Y
-    // sin_fix[0] = 0, cos_fix[0] = 255
-    *vx_out = -sin_fix[rotation];  // Negative because screen X increases right
-    *vy_out = -cos_fix[rotation];  // Negative because screen Y increases down
-}
-
-/**
- * Normalize rotation angle to valid range (0-23)
- */
-static inline uint8_t normalize_rotation(int16_t rotation)
-{
-    while (rotation < 0) {
-        rotation += SHIP_ROTATION_STEPS;
-    }
-    return rotation % SHIP_ROTATION_STEPS;
-}
-// ============================================================================
 // GRAPHICS INITIALIZATION
 // ============================================================================
 static void init_graphics(void) 

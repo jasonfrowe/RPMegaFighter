@@ -433,10 +433,10 @@ void update_music(void)
     current_frame++;
 }
 
-bool is_music_playing(void)
-{
-    return music_playing;
-}
+// bool is_music_playing(void)
+// {
+//     return music_playing;
+// }
 
 void increase_music_tempo(void)
 {

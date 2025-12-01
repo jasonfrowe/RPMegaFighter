@@ -141,10 +141,10 @@ bool is_game_paused(void)
     return game_paused;
 }
 
-void set_game_paused(bool paused)
-{
-    game_paused = paused;
-}
+// void set_game_paused(bool paused)
+// {
+//     game_paused = paused;
+// }
 
 void reset_pause_state(void)
 {
