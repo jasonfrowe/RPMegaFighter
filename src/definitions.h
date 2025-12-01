@@ -1,5 +1,5 @@
 /**
- * World and screen sizes
+ * Misc left over definitions that should be moved to appropriate modules
  */
 
 #include "input.h"
@@ -8,7 +8,6 @@
 
 // Text configs
 #define NTEXT 1
-unsigned text_message_addr;
 static char score_message[6] = "SCORE ";
 static char score_value[6] = "00000";
 #define MESSAGE_WIDTH 36
@@ -17,9 +16,8 @@ static char score_value[6] = "00000";
 static char message[MESSAGE_LENGTH]; 
 static char level_message[5] = "LEVEL";
 
-// (Block palette constants moved to constants.h)
-
-const uint16_t vlen = 57600; // Extended Memory space for bitmap graphics (320x180 @ 8-bits)
+// Extended Memory space for bitmap graphics (320x180 @ 8-bits)
+const uint16_t vlen = 57600; 
 
 // ============================================================================
 // SINE/COSINE LOOKUP TABLES (24 steps for rotation)

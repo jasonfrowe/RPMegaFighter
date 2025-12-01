@@ -36,22 +36,23 @@
 // XRAM MEMORY CONFIGURATION ADDRESSES
 // ============================================================================
 
-unsigned BITMAP_CONFIG;         //Bitmap Config 
-unsigned SPACECRAFT_CONFIG;     //Spacecraft Sprite Config - Affine 
-unsigned EARTH_CONFIG;          //Earth Sprite Config - Standard 
-unsigned STATION_CONFIG;        //Enemy station sprite config
-unsigned BATTLE_CONFIG;         //Enemy battle station sprite config 
-unsigned FIGHTER_CONFIG;        //Enemy fighter sprite config
-unsigned EBULLET_CONFIG;        //Enemy bullet sprite config
-unsigned BULLET_CONFIG;         //Player bullet sprite config
-unsigned SBULLET_CONFIG;        //Super bullet sprite config
-unsigned TEXT_CONFIG;           //On screen text configs
+unsigned BITMAP_CONFIG;         // Bitmap Config 
+unsigned SPACECRAFT_CONFIG;     // Spacecraft Sprite Config - Affine 
+unsigned EARTH_CONFIG;          // Earth Sprite Config - Standard 
+unsigned STATION_CONFIG;        // Enemy station sprite config
+unsigned BATTLE_CONFIG;         // Enemy battle station sprite config 
+unsigned FIGHTER_CONFIG;        // Enemy fighter sprite config
+unsigned EBULLET_CONFIG;        // Enemy bullet sprite config
+unsigned BULLET_CONFIG;         // Player bullet sprite config
+unsigned SBULLET_CONFIG;        // Super bullet sprite config
+unsigned TEXT_CONFIG;           // On screen text configs
+unsigned text_message_addr;     // Text message address
+unsigned POWERUP_CONFIG;        // Powerup sprite config
+unsigned BOMBER_CONFIG;         // Bomber Sprite (8x8)
 
 // ============================================================================
 // GAME STRUCTURES
 // ============================================================================
-
-// Bullet structure defined in bullets.h
 
 // Fighter/Enemy structure  
 typedef struct {
@@ -77,8 +78,6 @@ extern int16_t player_vx_applied, player_vy_applied;
 // Scrolling
 int16_t scroll_dx = 0;
 int16_t scroll_dy = 0;
-int16_t world_offset_x = 0;  // Cumulative world offset from scrolling
-int16_t world_offset_y = 0;
 
 // Earth background sprite
 int16_t earth_x = 0;
@@ -91,16 +90,6 @@ int16_t game_score = 0;     // Skill-based score
 int16_t game_level = 1;
 uint16_t game_frame = 0;    // Frame counter (0-59)
 static bool game_over = false;
-
-// Bullet pools - now in bullets.c module
-extern Bullet bullets[MAX_BULLETS];
-extern uint8_t current_bullet_index;
-
-// Input state
-// gamepad_t gamepad[GAMEPAD_COUNT];
-
-// Storage for sprite config addresses referenced across modules
-unsigned POWERUP_CONFIG;
 
 // ============================================================================
 // ROTATION UTILITIES
@@ -256,17 +245,24 @@ static void init_graphics(void)
     xram0_struct_set(POWERUP_CONFIG, vga_mode4_sprite_t, log_size, 3);  // 8x8 sprite (2^3)
     xram0_struct_set(POWERUP_CONFIG, vga_mode4_sprite_t, has_opacity_metadata, false);
 
+    BOMBER_CONFIG = POWERUP_CONFIG + sizeof(vga_mode4_sprite_t);
+    xram0_struct_set(BOMBER_CONFIG, vga_mode4_sprite_t, x_pos_px, -100);  // Start offscreen
+    xram0_struct_set(BOMBER_CONFIG, vga_mode4_sprite_t, y_pos_px, -100);
+    xram0_struct_set(BOMBER_CONFIG, vga_mode4_sprite_t, xram_sprite_ptr, BOMBER_DATA);
+    xram0_struct_set(BOMBER_CONFIG, vga_mode4_sprite_t, log_size, 3);  // 8x8 sprite (2^3)
+    xram0_struct_set(BOMBER_CONFIG, vga_mode4_sprite_t, has_opacity_metadata, false);
+
     // Enable sprite modes:
     // First enable Earth sprite (background layer)
     xregn(1, 0, 1, 5, 4, 0, EARTH_CONFIG, 1, 0);
     // Then enable affine sprites (player) - 1 sprite at SPACECRAFT_CONFIG
     xregn(1, 0, 1, 5, 4, 1, SPACECRAFT_CONFIG, 1, 2);
-    // Finally enable regular sprites (fighters + ebullets + bullets + sbullets + power ups) - all regular sprites in one call
-    xregn(1, 0, 1, 5, 4, 0, FIGHTER_CONFIG, MAX_FIGHTERS + MAX_EBULLETS + MAX_BULLETS + MAX_SBULLETS + 1, 1);
+    // Finally enable regular sprites (fighters + ebullets + bullets + sbullets + power ups + bomber) - all regular sprites in one call
+    xregn(1, 0, 1, 5, 4, 0, FIGHTER_CONFIG, MAX_FIGHTERS + MAX_EBULLETS + MAX_BULLETS + MAX_SBULLETS + 2, 1);
 
     // Enable text mode for on-screen messages
 
-    TEXT_CONFIG = POWERUP_CONFIG + sizeof(vga_mode4_sprite_t); // 0xEC32; //Config address for text mode
+    TEXT_CONFIG = BOMBER_CONFIG + sizeof(vga_mode4_sprite_t); // 0xEC32; //Config address for text mode
     // Place text message data immediately after text config entries
     text_message_addr = TEXT_CONFIG + NTEXT * sizeof(vga_mode1_config_t); // 0xEC42; // address to store text message
 

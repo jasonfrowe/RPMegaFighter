@@ -26,6 +26,7 @@
 #define EBULLET_DATA    0xE9A0  //Enemy bullet Sprite (2x2)
 #define BULLET_DATA     0xE9A8  //Player bullet Sprite (2x2)
 #define SBULLET_DATA    0xE9B0  //Super bullet Sprite (4x4)
+#define BOMBER_DATA     0xEF00  //Bomber Sprite (8x8)
 
 // 0xE9D0 - 0xE9F8 40      Input   Gamepads        4 Pads x 10 bytes
 // 0xE9F8 - 0xEA18 32      Input   Keyboard        256 bits
@@ -53,19 +54,22 @@ extern unsigned FIGHTER_CONFIG;         //Enemy fighter sprite config
 extern unsigned EBULLET_CONFIG;         //Enemy bullet sprite config
 extern unsigned BULLET_CONFIG;          //Player bullet sprite config
 extern unsigned SBULLET_CONFIG;         //Super bullet sprite config
+extern unsigned POWERUP_CONFIG; 
 
 // 0xEC46 - 0xEC56 16      Config  Text Config     Plane 2 Overlay
 // 0xEC56 - 0xED2E 216     Data    Text Buffer     72 chars x 3 bytes
 // 0xED2E - 0xED40 18      Gap     Safety Padding
 extern unsigned TEXT_CONFIG;            //On screen text configs
+extern unsigned text_message_addr;
 
 // 0xED40 - 0xED80 64      Config  Sound (PSG)     Extended Registers
 // 0xED80 - 0xEE80 256     Pixels  Explosion       4x32 Anim Strip
 // 0xEE80 - 0xEF00 128     Pixels  Powerup         8x8 (16bpp)
 // 0xEF00 - 0xEF80 128     Pixels  Bomber          8x8 (16bpp)
 // 0xEF80 - 0xF000 128     Pixels  Marker          8x8 (16bpp)
-#define PSG_XRAM_ADDR   0xED40  // PSG memory location (must match sound.c)
-#define EXPLOSION_DATA  0xED80  // Sprite data (not config data)
+#define PSG_XRAM_ADDR   0xED40    // PSG memory location (must match sound.c)
+#define EXPLOSION_DATA  0xED80    // Sprite data for explosion animation (not config data)
+extern unsigned BOMBER_CONFIG;      // Bomber Sprite (8x8)
 
 // 0xF000 - 0xFFFF 4,096   Free    Available       Expansion Space
 #define EXTRA_SPRITES_START 0xF000 // Next free XRAM address
