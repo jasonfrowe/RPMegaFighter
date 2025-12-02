@@ -124,7 +124,7 @@ void show_level_up(void)
  */
 void show_game_over(void)
 {
-    const uint8_t red_color = 0x03;
+    const uint8_t red_color = 0x20;
     const uint16_t center_x = 100;
     
     // Start end music
