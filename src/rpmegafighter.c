@@ -519,7 +519,7 @@ int main(void)
         // Start gameplay music
         start_gameplay_music();
 
-        spawn_bomber(game_level);
+        // spawn_bomber(game_level); 
         
         printf("Starting game loop...\n\n");
         
@@ -631,7 +631,7 @@ int main(void)
             update_bullets();
             update_sbullets();
             update_ebullets();
-            update_bomber();
+            // update_bomber();
 
             // Update scrolling based on player movement
             update_powerup();
