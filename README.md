@@ -1,8 +1,17 @@
 # Mega Super Fighter Challenge
 for the [Picocomputer 6502](https://picocomputer.github.io/)
 
-Download the latest rom: [2025.11.30/v0.61](https://github.com/jasonfrowe/RPMegaFighter/releases/download/v0.61/rpmegafighterv061.rp6502)  
+Download the latest rom: [2025.12.01/v0.7](https://github.com/jasonfrowe/RPMegaFighter/releases/download/v0.7/rpmegafighterv061.rp6502)  
 Download the gamepad mapper: [2025.11.30/gamepad_mapper](https://github.com/jasonfrowe/RPMegaFighter/releases/download/v0.61/gamepad_mapper.rp6502)
+
+## Installation & Asset Upload
+To enjoy the full graphical title screen, you must upload the asset files (`title_screen.bin` and `title_screen_pal.bin`) to the Picocomputer's storage alongside the game executable.
+
+If using the python tool to upload directly to hardware:
+```bash
+tools/rp6502.py upload title_screen.bin
+tools/rp6502.py upload title_screen_pal.bin
+```
 
 ## Overview
 Dive into an epic space battle where you are the
@@ -100,7 +109,7 @@ victory.
 - **Platform:** [Picocomputer 6502](https://picocomputer.github.io/)
 - **Developer:** Jason Rowe
   - email: jason@jasonrowe.org
-- **Release Date:** Alpha - 2025-11-29
+- **Release Date:** Alpha - 2025-11-30
 
 ## Build Option: ENABLE_INPUT_TEST
 
