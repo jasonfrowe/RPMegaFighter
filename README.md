@@ -5,7 +5,7 @@ Download the latest rom: [2025.12.01/v0.7](https://github.com/jasonfrowe/RPMegaF
 Download the gamepad mapper: [2025.11.30/gamepad_mapper](https://github.com/jasonfrowe/RPMegaFighter/releases/download/v0.61/gamepad_mapper.rp6502)
 
 ## Installation & Asset Upload
-To enjoy the full graphical title screen, you must upload the asset files ([`title_screen.bin`](https://github.com/jasonfrowe/RPMegaFighter/releases/download/v0.7/title_screen.bin) and `title_screen_pal.bin`) to the Picocomputer's storage alongside the game executable.
+To enjoy the full graphical title screen, you must upload the asset files ([`title_screen.bin`](https://github.com/jasonfrowe/RPMegaFighter/releases/download/v0.7/title_screen.bin) and [`title_screen_pal.bin`](https://github.com/jasonfrowe/RPMegaFighter/releases/download/v0.7/title_screen_pal.bin)) to the Picocomputer's storage alongside the game executable.
 
 If using the python tool to upload directly to hardware:
 ```bash
