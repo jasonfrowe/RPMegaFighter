@@ -33,18 +33,7 @@ void show_title_screen(void)
     // Start title music
     start_title_music();
     
-    // // Clear screen
-    // RIA.addr0 = 0;
-    // RIA.step0 = 1;
-    // for (unsigned i = vlen; i--;) {
-    //     RIA.rw0 = 0;
-    // }
-    
-    // Draw title text
-    // draw_text(center_x, 40, "MEGA", red_color);
-    // draw_text(center_x, 55, "SUPER", red_color);
-    // draw_text(center_x, 70, "FIGHTER", red_color);
-    // draw_text(center_x, 85, "CHALLENGE", blue_color);
+
     
     // Draw high scores on right side
     draw_high_scores();
@@ -58,11 +47,14 @@ void show_title_screen(void)
     const uint16_t flash_interval = 30;  // 0.5 seconds at 60 Hz
     uint8_t current_color = red_color;
     
-    // Draw initial "PRESS START" text
-    // draw_text(center_x, 110, "PRESS START", red_color);
-    
-    // Draw exit instruction
-    // draw_text(center_x - 30, 130, "PUSH A+Y TO EXIT", blue_color);
+    // SAVE ORIGINAL COLOR (Index 11)
+    // Palette starts at 0xF000. Index 11 is at 0xF000 + (11 * 2) = 0xF016
+    RIA.addr0 = 0xF016;
+    RIA.step0 = 1;
+    uint8_t orig_color_low = RIA.rw0;
+    uint8_t orig_color_high = RIA.rw0;
+
+    uint16_t color_cycle_timer = 0; // Timer for color cycling
     
     printf("Title screen displayed. Press START to begin...\n");
     
@@ -78,7 +70,31 @@ void show_title_screen(void)
         // Increment seed counter for randomness
         seed_counter++;
 
-        handle_input(); 
+        // Handle input
+        handle_input();
+        
+        // --- CYCLE INDEX 11 ---
+        // Cycle speed: Update every 4th frame
+        color_cycle_timer++;
+        if ((color_cycle_timer % 4) == 0) {
+            // Pick a color from our Rainbow Range (Indices 32 to 255)
+            // Total rainbow colors = 224
+            uint8_t source_index = 32 + ((color_cycle_timer / 4) % 224);
+            
+            // Calculate address of the source color
+            unsigned source_addr = 0xF000 + (source_index * 2);
+            
+            // Read the rainbow color
+            RIA.addr0 = source_addr;
+            RIA.step0 = 1;
+            uint8_t r_low = RIA.rw0;
+            uint8_t r_high = RIA.rw0;
+            
+            // Write it to Index 11
+            RIA.addr0 = 0xF016;
+            RIA.rw0 = r_low;
+            RIA.rw0 = r_high;
+        }
 
         // Update high score display periodically to rotate colours
         highscore_counter++;
@@ -131,6 +147,13 @@ void show_title_screen(void)
                 lfsr = seed_counter;
                 if (lfsr == 0) lfsr = 0xACE1; // Seed must never be 0
                 printf("LFSR initialized with seed: 0x%04X\n", lfsr);
+
+                // --- RESTORE COLOR BEFORE EXIT ---
+                RIA.addr0 = 0xF016;
+                RIA.step0 = 1;
+                RIA.rw0 = orig_color_low;
+                RIA.rw0 = orig_color_high;
+             // ---------------------------------
                 
                 return;  // Exit title screen
             }
@@ -143,6 +166,13 @@ void show_title_screen(void)
         idle_frames++;
         if (idle_frames >= DEMO_IDLE_FRAMES) {
 
+            // --- RESTORE COLOR BEFORE EXIT ---
+            RIA.addr0 = 0xF016;
+            RIA.step0 = 1;
+            RIA.rw0 = orig_color_low;
+            RIA.rw0 = orig_color_high;
+            // ---------------------------------
+
             demo_mode_active = true; // Set demo mode flag
 
             // Clear entire screen before exiting
@@ -154,12 +184,6 @@ void show_title_screen(void)
 
             return;  // Exit title screen to start demo mode
         }
-
-        // Check for A+Y buttons pressed together to exit
-        // if ((gamepad[0].btn0 & GP_BTN_A) && (gamepad[0].btn0 & GP_BTN_Y)) {
-        //     printf("A+Y pressed - exiting...\n");
-        //     exit(0);
-        // }
         
         // Check for ESC to exit game
         if (key(KEY_ESC)) {
@@ -167,21 +191,6 @@ void show_title_screen(void)
             exit(0);
         }
         
-        // Flash "PRESS START" every 5 seconds
-        // flash_counter++;
-        // if (flash_counter >= flash_interval) {
-        //     flash_counter = 0;
-        //     press_start_visible = !press_start_visible;
-            
-        //     if (press_start_visible) {
-        //         // Alternate color between red and blue
-        //         current_color = (current_color == red_color) ? blue_color : red_color;
-        //         draw_text(center_x - 10, 100, "PRESS START", current_color);
-        //     } else {
-        //         // Clear the text
-        //         clear_rect(center_x - 10, 100, 43, 5);
-        //     }
-        // }
         flash_counter++;
         if (flash_counter >= flash_interval) {
             flash_counter = 0;
