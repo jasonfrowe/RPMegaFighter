@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "sbullets.h"
+// #include "asteroids.h"
 
 // ============================================================================
 // CONSTANTS
@@ -28,6 +29,9 @@ extern const int16_t cos_fix[25];
 // Collision check from fighters module
 extern bool check_bullet_fighter_collision(int16_t bullet_x, int16_t bullet_y,
                                           int16_t* player_score_out, int16_t* game_score_out);
+
+// Collision check from asteroids module
+// extern bool check_asteroid_hit(int16_t bx, int16_t by);
 
 // ============================================================================
 // MODULE STATE
@@ -86,6 +90,15 @@ void update_bullets(void)
             
             goto next_bullet;  // Skip rest of bullet update
         }
+
+        // Check collision with asteroids
+        // if (check_asteroid_hit(bullets[i].x, bullets[i].y)) {
+        //     bullets[i].status = -1; // Destroy bullet
+        //     // Move bullet sprite offscreen
+        //     unsigned ptr = BULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
+        //     xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
+        //     continue;
+        // }
         
         // Get velocity components based on bullet direction
         int16_t bvx = -sin_fix[bullets[i].status];

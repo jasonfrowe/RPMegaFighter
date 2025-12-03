@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "powerup.h"
+// #include "asteroids.h"
 
 // ============================================================================
 // CONSTANTS
@@ -57,6 +58,9 @@ extern unsigned EBULLET_CONFIG;
 // Lookup tables from definitions.h
 extern const int16_t sin_fix[25];
 extern const int16_t cos_fix[25];
+
+// Asteroid collision check
+// extern bool check_asteroid_hit_fighter(int16_t fx, int16_t fy);
 
 // Sound system (types defined in sound.h)
 extern void play_sound(uint8_t type, uint16_t frequency, uint8_t waveform, 
@@ -249,6 +253,16 @@ void update_fighters(void)
             fighters[i].is_exploding = true; // Start explosion sequence
             continue;
         }
+
+        // Inside update_fighters
+        // if (check_asteroid_hit_fighter(fighters[i].x, fighters[i].y)) {
+        //     fighters[i].status = 0;
+        //     active_fighter_count--;
+        //     enemy_score += 2;
+        //     fighters[i].is_exploding = true; // Start explosion sequence
+        //     continue;
+        //     // Do not give player points? Or give points for "Environment Kill"?
+        // }
         
         if (game_frame == 0) {
             int16_t fdx = player_world_x - fighters[i].x;

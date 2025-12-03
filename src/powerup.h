@@ -1,7 +1,7 @@
 #ifndef POWERUP_H
 #define POWERUP_H
 
-#define POWERUP_DATA      0xEE80  // 8x8 Sprite Data (128 bytes) Ends at 0xEF00
+#define POWERUP_DATA      0xF300  // 8x8 Sprite Data (128 bytes) Ends at 0xEF00
 #define POWERUP_DURATION_FRAMES  (60 * 5) // Power-up lasts for 5 seconds
 #define POWERUP_DROP_CHANCE_PERCENT 1   // 1% chance to drop a power-up on fighter destruction
 

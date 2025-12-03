@@ -33,6 +33,7 @@
 #include "powerup.h"
 #include "bomber.h"
 #include "splash_screen.h"
+#include "asteroids.h"
 
 // ============================================================================
 // XRAM MEMORY CONFIGURATION ADDRESSES
@@ -41,6 +42,7 @@
 unsigned BITMAP_CONFIG;         // Bitmap Config 
 unsigned SPACECRAFT_CONFIG;     // Spacecraft Sprite Config - Affine 
 unsigned EARTH_CONFIG;          // Earth Sprite Config - Standard 
+unsigned ASTEROID_L_CONFIG;     //Asteroid L Sprite Config - Affine
 unsigned STATION_CONFIG;        // Enemy station sprite config
 unsigned BATTLE_CONFIG;         // Enemy battle station sprite config 
 unsigned FIGHTER_CONFIG;        // Enemy fighter sprite config
@@ -51,6 +53,8 @@ unsigned TEXT_CONFIG;           // On screen text configs
 unsigned text_message_addr;     // Text message address
 unsigned POWERUP_CONFIG;        // Powerup sprite config
 unsigned BOMBER_CONFIG;         // Bomber Sprite (8x8)
+unsigned ASTEROID_M_CONFIG;     // Asteroid M Config
+unsigned ASTEROID_S_CONFIG;     // Asteroid S Config
 
 // ============================================================================
 // GAME STRUCTURES
@@ -92,6 +96,11 @@ int16_t game_score = 0;     // Skill-based score
 int16_t game_level = 1;
 uint16_t game_frame = 0;    // Frame counter (0-59)
 static bool game_over = false;
+
+//Asteroid functions
+extern void init_asteroids(void);
+extern void update_asteroids(void);
+extern void spawn_asteroids(void);
 
 // ============================================================================
 // GRAPHICS INITIALIZATION
@@ -146,10 +155,28 @@ static void init_graphics(void)
     xram0_struct_set(SPACECRAFT_CONFIG, vga_mode4_asprite_t, xram_sprite_ptr, SPACESHIP_DATA);
     xram0_struct_set(SPACECRAFT_CONFIG, vga_mode4_asprite_t, log_size, 3);  // 8x8 sprite (2^3)
     xram0_struct_set(SPACECRAFT_CONFIG, vga_mode4_asprite_t, has_opacity_metadata, false);
-    
+
+    // Set up Asteroid L sprite (VGA Mode 4 - affine sprite)
+    ASTEROID_L_CONFIG = SPACECRAFT_CONFIG + sizeof(vga_mode4_asprite_t);
+
+    // 3. Set Scale to 200% (Makes it look 32x32)
+    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, transform[0], 0x0200); // SX = 2.0
+    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, transform[1], 0x0000); // XY = 0.0
+    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, transform[2], 0x0000); // TX = 0.0
+    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, transform[3], 0x0200); // SY = 2.0
+    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, transform[4], 0x0000); // TZ = 0.0
+    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, transform[5], 0x0000); // TY = 0.0
+
+    // Set sprite position and properties
+    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, x_pos_px, -100); // Start offscreen
+    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, y_pos_px, -100);
+    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, xram_sprite_ptr, ASTEROID_M_DATA);
+    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, log_size, 4);  // 16x16 sprite (2^4)
+    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, has_opacity_metadata, false);
+
     // Set up fighter sprites (VGA Mode 4 - regular sprites)
-    FIGHTER_CONFIG = SPACECRAFT_CONFIG + sizeof(vga_mode4_asprite_t);
-    
+    FIGHTER_CONFIG = ASTEROID_L_CONFIG + COUNT_ASTEROID_L * sizeof(vga_mode4_asprite_t);
+
     for (uint8_t i = 0; i < MAX_FIGHTERS; i++) {
         unsigned ptr = FIGHTER_CONFIG + i * sizeof(vga_mode4_sprite_t);
         
@@ -218,17 +245,31 @@ static void init_graphics(void)
     xram0_struct_set(BOMBER_CONFIG, vga_mode4_sprite_t, log_size, 3);  // 8x8 sprite (2^3)
     xram0_struct_set(BOMBER_CONFIG, vga_mode4_sprite_t, has_opacity_metadata, false);
 
+    ASTEROID_M_CONFIG = BOMBER_CONFIG + sizeof(vga_mode4_sprite_t);
+    xram0_struct_set(ASTEROID_M_CONFIG, vga_mode4_sprite_t, x_pos_px, -100);  // Start offscreen
+    xram0_struct_set(ASTEROID_M_CONFIG, vga_mode4_sprite_t, y_pos_px, -100);
+    xram0_struct_set(ASTEROID_M_CONFIG, vga_mode4_sprite_t, xram_sprite_ptr, ASTEROID_M_DATA);
+    xram0_struct_set(ASTEROID_M_CONFIG, vga_mode4_sprite_t, log_size, 4);  // 16x16 sprite (2^4)
+    xram0_struct_set(ASTEROID_M_CONFIG, vga_mode4_sprite_t, has_opacity_metadata, false);
+
+    ASTEROID_S_CONFIG = ASTEROID_M_CONFIG + COUNT_ASTEROID_M * sizeof(vga_mode4_sprite_t);
+    xram0_struct_set(ASTEROID_S_CONFIG, vga_mode4_sprite_t, x_pos_px, -100);  // Start offscreen
+    xram0_struct_set(ASTEROID_S_CONFIG, vga_mode4_sprite_t, y_pos_px, -100);
+    xram0_struct_set(ASTEROID_S_CONFIG, vga_mode4_sprite_t, xram_sprite_ptr, ASTEROID_S_DATA);
+    xram0_struct_set(ASTEROID_S_CONFIG, vga_mode4_sprite_t, log_size, 5);  // 32x32 sprite (2^5)
+    xram0_struct_set(ASTEROID_S_CONFIG, vga_mode4_sprite_t, has_opacity_metadata, false);
+
     // Enable sprite modes:
     // First enable Earth sprite (background layer)
     xregn(1, 0, 1, 5, 4, 0, EARTH_CONFIG, 1, 0);
     // Then enable affine sprites (player) - 1 sprite at SPACECRAFT_CONFIG
-    xregn(1, 0, 1, 5, 4, 1, SPACECRAFT_CONFIG, 1, 2);
-    // Finally enable regular sprites (fighters + ebullets + bullets + sbullets + power ups + bomber) - all regular sprites in one call
-    xregn(1, 0, 1, 5, 4, 0, FIGHTER_CONFIG, MAX_FIGHTERS + MAX_EBULLETS + MAX_BULLETS + MAX_SBULLETS + 2, 1);
+    xregn(1, 0, 1, 5, 4, 1, SPACECRAFT_CONFIG, 1 + COUNT_ASTEROID_L, 2);
+    // Finally enable regular sprites (fighters + ebullets + bullets + sbullets + power ups + bomber + 2 x asteroids) - all regular sprites in one call
+    xregn(1, 0, 1, 5, 4, 0, FIGHTER_CONFIG, MAX_FIGHTERS + MAX_EBULLETS + MAX_BULLETS + MAX_SBULLETS + 2 + COUNT_ASTEROID_L + COUNT_ASTEROID_M, 1);
 
     // Enable text mode for on-screen messages
 
-    TEXT_CONFIG = BOMBER_CONFIG + sizeof(vga_mode4_sprite_t); // 0xEC32; //Config address for text mode
+    TEXT_CONFIG = ASTEROID_S_CONFIG + COUNT_ASTEROID_S * sizeof(vga_mode4_sprite_t); // 0xEC32; //Config address for text mode
     // Place text message data immediately after text config entries
     text_message_addr = TEXT_CONFIG + NTEXT * sizeof(vga_mode1_config_t); // 0xEC42; // address to store text message
 
@@ -237,11 +278,15 @@ static void init_graphics(void)
     printf("  BITMAP_CONFIG=0x%X\n", BITMAP_CONFIG);
     printf("  EARTH_CONFIG=0x%X\n", EARTH_CONFIG);
     printf("  SPACECRAFT_CONFIG=0x%X\n", SPACECRAFT_CONFIG);
+    printf("  ASTEROID_L_CONFIG=0x%X\n", ASTEROID_L_CONFIG);
+    printf("  BOMBER_CONFIG=0x%X\n", BOMBER_CONFIG);
     printf("  FIGHTER_CONFIG=0x%X\n", FIGHTER_CONFIG);
     printf("  EBULLET_CONFIG=0x%X\n", EBULLET_CONFIG);
     printf("  BULLET_CONFIG=0x%X\n", BULLET_CONFIG);
     printf("  SBULLET_CONFIG=0x%X\n", SBULLET_CONFIG);
     printf("  POWERUP_CONFIG=0x%X\n", POWERUP_CONFIG);
+    printf("  ASTEROID_M_CONFIG=0x%X\n", ASTEROID_M_CONFIG);
+    printf("  ASTEROID_S_CONFIG=0x%X\n", ASTEROID_S_CONFIG);
     printf("  TEXT_CONFIG=0x%X\n", TEXT_CONFIG);
     printf("  text_message_addr=0x%X\n", text_message_addr);
     // Calculate and print end of text storage (MESSAGE_LENGTH * bytes_per_char)
@@ -379,6 +424,7 @@ static void init_game(void)
     init_bullets();
     init_sbullets();
     init_fighters();
+    init_asteroids();
     init_stars();
 
     // Reset Earth position
@@ -520,18 +566,22 @@ int main(void)
         start_gameplay_music();
 
         // spawn_bomber(game_level); 
+        spawn_asteroids();
         
         printf("Starting game loop...\n\n");
         
         // Gameplay loop
         game_over = false;
         bool demo_input_was_pressed = false;
+        uint16_t game_frame = 0;
         while (!game_over) {
             // Wait for vertical sync (60 Hz)
             if (RIA.vsync == vsync_last)
                 continue;
             vsync_last = RIA.vsync;
-        
+
+            game_frame++;
+
             // Read input
             handle_input(); 
 
@@ -610,7 +660,7 @@ int main(void)
             // Update cooldown timers
             decrement_bullet_cooldown();
             decrement_ebullet_cooldown();
-            
+
             // Enemy bullet system
             fire_ebullet();
             
@@ -632,6 +682,7 @@ int main(void)
             update_sbullets();
             update_ebullets();
             // update_bomber();
+            update_asteroids();
 
             // Update scrolling based on player movement
             update_powerup();

@@ -1,6 +1,8 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+#include <stdint.h> // for uint8_t, uint16_t, etc.
+
 /**
  * constants.h - Consolidated game constants
  * 
@@ -26,7 +28,6 @@
 #define EBULLET_DATA    0xE9A0  //Enemy bullet Sprite (2x2)
 #define BULLET_DATA     0xE9A8  //Player bullet Sprite (2x2)
 #define SBULLET_DATA    0xE9B0  //Super bullet Sprite (4x4)
-#define BOMBER_DATA     0xEF00  //Bomber Sprite (8x8)
 
 // 0xE9D0 - 0xE9F8 40      Input   Gamepads        4 Pads x 10 bytes
 // 0xE9F8 - 0xEA18 32      Input   Keyboard        256 bits
@@ -37,24 +38,32 @@
 // 0xEA20 - 0xEA2E 14      Config  Bitmap Config   Plane 0 Setup
 // 0xEA2E - 0xEA36 8       Config  Earth Config    Plane 2 Setup
 // 0xEA36 - 0xEA56 32      Config  Spaceship       Start of Plane 1 Swarm (Affine)
-// 0xEA56 - 0xEB56 256     Config  Fighters        32 sprites (Standard)
-// 0xEB56 - 0xEBD6 128     Config  E-Bullets       16 sprites
-// 0xEBD6 - 0xEC16 64      Config  P-Bullets       8 sprites
-// 0xEC16 - 0xEC2E 24      Config  S-Bullets       3 sprites
-// 0xEC2E - 0xEC36 8       Config  Powerup         1 sprite
-// 0xEC36 - 0xEC3E 8       Config  Bomber          1 sprite
-// 0xEC3E - 0xEC46 8       Config  Marker          1 sprite
+// 0xEA56 - 0xEA96 64      Config  Asteroid L      2 Sprites (Affine)  
+// 0xEA96 - 0xEB96 256     Config  Fighters        32 sprites (Standard)
+// 0xEB96 - 0xEC16 128     Config  E-Bullets       16 sprites
+// 0xEC16 - 0xEC56 64      Config  P-Bullets       8 sprites
+// 0xEC56 - 0xEC6E 24      Config  S-Bullets       3 sprites
+// 0xEC6E - 0xEC76 8       Config  Powerup         1 sprite
+// 0xEC76 - 0xEC7E 8       Config  Bomber          1 sprite
+// 0xEC7E - 0xEC86 8       Config  Marker          1 sprite
 #define VGA_CONFIG_START 0xEA20         //Start of graphic config addresses (after gamepad and keyboard data)
 extern unsigned BITMAP_CONFIG;          //Bitmap Config 
 extern unsigned SPACECRAFT_CONFIG;      //Spacecraft Sprite Config - Affine 
 extern unsigned EARTH_CONFIG;           //Earth Sprite Config - Standard 
+extern unsigned ASTEROID_L_CONFIG;      //Asteroid L Sprite Config - Affine
 extern unsigned STATION_CONFIG;         //Enemy station sprite config
 extern unsigned BATTLE_CONFIG;          //Enemy battle station sprite config 
 extern unsigned FIGHTER_CONFIG;         //Enemy fighter sprite config
 extern unsigned EBULLET_CONFIG;         //Enemy bullet sprite config
 extern unsigned BULLET_CONFIG;          //Player bullet sprite config
 extern unsigned SBULLET_CONFIG;         //Super bullet sprite config
-extern unsigned POWERUP_CONFIG; 
+extern unsigned POWERUP_CONFIG;         // Powerup sprite config
+extern unsigned BOMBER_CONFIG;          // Bomber Sprite (8x8)
+
+// 0xEC86 - 0xECA6 32      Config  Asteroid M      4 Sprites (Standard)
+// 0xECA6 - 0xECE6 64      Config  Asteroid S      8 Sprites (Standard)
+extern unsigned ASTEROID_M_CONFIG;
+extern unsigned ASTEROID_S_CONFIG;
 
 // 0xEC46 - 0xEC56 16      Config  Text Config     Plane 2 Overlay
 // 0xEC56 - 0xED2E 216     Data    Text Buffer     72 chars x 3 bytes
@@ -62,17 +71,39 @@ extern unsigned POWERUP_CONFIG;
 extern unsigned TEXT_CONFIG;            //On screen text configs
 extern unsigned text_message_addr;
 
-// 0xED40 - 0xED80 64      Config  Sound (PSG)     Extended Registers
-// 0xED80 - 0xEE80 256     Pixels  Explosion       4x32 Anim Strip
-// 0xEE80 - 0xEF00 128     Pixels  Powerup         8x8 (16bpp)
-// 0xEF00 - 0xEF80 128     Pixels  Bomber          8x8 (16bpp)
-// 0xEF80 - 0xF000 128     Pixels  Marker          8x8 (16bpp)
-#define PSG_XRAM_ADDR   0xED40    // PSG memory location (must match sound.c)
-#define EXPLOSION_DATA  0xED80    // Sprite data for explosion animation (not config data)
-extern unsigned BOMBER_CONFIG;      // Bomber Sprite (8x8)
+// 0xEDCE - 0xF000 562     Gap     FreeSpace
 
-// 0xF000 - 0xFFFF 4,096   Free    Available       Expansion Space
-#define EXTRA_SPRITES_START 0xF000 // Next free XRAM address
+// 0xF000 - 0xF200 512     Palette 
+
+// 0xF200 - 0xF300 256     Pixels  Explosion       4x32 Anim Strip
+// 0xF300 - 0xF380 128     Pixels  Powerup         8x8 (16bpp)
+// 0xF380 - 0xF400 128     Pixels  Bomber          8x8 (16bpp)
+// 0xF400 - 0xF480 128     Pixels  Marker          8x8 (16bpp)
+#define EXPLOSION_DATA  0xF200    // Sprite data for explosion animation (not config data)
+// #define POWERUP_DATA      0xF300  <-- defined in powerup.h
+#define BOMBER_DATA     0xF380  //Bomber Sprite (8x8)
+#define MARKER_DATA     0xF400
+
+// 0xF480 - 0xFC80 2,048   Pixels  Asteroid M      16x16 (4 frames)  <-- shared with Asteroid_L
+// 0xFC80 - 0xFE80 512     Pixels  Asteroid S      8x8 (4 frames)
+#define ASTEROID_M_DATA   0xF480  // Asteroid M Sprite Data (16x16, 4 frames)
+#define ASTEROID_S_DATA   0xFC80  // Asteroid S Sprite Data (8x8, 4 frames)
+
+// 0xFE80 - 0xFFC0 320     Gap     Space  Room for ~2 more 16x16 sprites
+// 0xFFC0 - 0xFFFF 64      Config  Sound (PSG) Safety Anchor
+#define PSG_XRAM_ADDR   0xFFC0    // PSG memory location (must match sound.c)
+
+// Global frame counter (from rpmegafighter.c)
+extern uint16_t game_frame;
+extern int16_t player_score;
+extern int16_t enemy_score;
+
+// Asteroids
+// Define Counts
+#define COUNT_ASTEROID_L  2  // 2 Large on screen
+#define COUNT_ASTEROID_M  4  // 4 Medium on screen
+#define COUNT_ASTEROID_S  8  // 8 Small on screen
+
 
 // Player ship properties
 #define SHIP_ROTATION_STEPS 24  // Number of rotation steps

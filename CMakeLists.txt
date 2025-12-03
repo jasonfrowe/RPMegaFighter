@@ -36,9 +36,11 @@ rp6502_asset(rpmegafighter 0x1E980 images/fighter.bin)
 rp6502_asset(rpmegafighter 0x1E9A0 images/ebullet.bin)
 rp6502_asset(rpmegafighter 0x1E9A8 images/bullet.bin)
 rp6502_asset(rpmegafighter 0x1E9B0 images/sbullet.bin)
-rp6502_asset(rpmegafighter 0x1ED80 images/fighter_explode.bin)
-rp6502_asset(rpmegafighter 0x1EE80 images/powerup.bin)
-rp6502_asset(rpmegafighter 0x1EF00 images/bomber.bin)
+rp6502_asset(rpmegafighter 0x1F200 images/fighter_explode.bin)
+rp6502_asset(rpmegafighter 0x1F300 images/powerup.bin)
+rp6502_asset(rpmegafighter 0x1F380 images/bomber.bin)
+rp6502_asset(rpmegafighter 0x1F480 images/asteroid_M.bin)
+rp6502_asset(rpmegafighter 0x1FC80 images/asteroid_S.bin)
 rp6502_executable(rpmegafighter
     spaceship2.bin.rp6502
     Earth.bin.rp6502
@@ -73,6 +75,7 @@ target_sources(rpmegafighter PRIVATE
     src/random.c
     src/powerup.c
     src/bomber.c
+    src/asteroids.c
 )
 
 # Gamepad test utility
