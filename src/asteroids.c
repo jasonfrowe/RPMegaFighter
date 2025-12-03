@@ -106,18 +106,6 @@ static void activate_asteroid(asteroid_t *a, AsteroidType type) {
     else if (type == AST_MEDIUM) a->health = 10;
     else a->health = 2;
 
-    // --- INITIAL GPU CONFIG ---
-    // We set static properties here so we don't have to set them every frame
-    // if (type == AST_LARGE) {
-    //     // Find index in pool to get address
-    //     int idx = a - ast_l; // Pointer math
-    //     unsigned ptr = ASTEROID_L_CONFIG + (idx * sizeof(vga_mode4_asprite_t));
-        
-    //     xram0_struct_set(ptr, vga_mode4_asprite_t, xram_sprite_ptr, ASTEROID_L_DATA);
-    //     xram0_struct_set(ptr, vga_mode4_asprite_t, log_size, 5); // 32x32
-    //     xram0_struct_set(ptr, vga_mode4_asprite_t, has_opacity_metadata, false);
-    // } 
-    // (Med/Small config handled in update or similar block)
 }
 
 void spawn_asteroid_wave(int level) {
@@ -212,23 +200,17 @@ static void update_single(asteroid_t *a, int index, unsigned base_cfg, int size_
 void move_asteroids_offscreen(void) {
     // Loop through pools
     for(int i=0; i<MAX_AST_L; i++) {
-        if (ast_l[i].active) {
-            // update_single(&ast_l[i], i, ASTEROID_L_CONFIG, sizeof(vga_mode4_asprite_t));
-            unsigned ptr = ASTEROID_L_CONFIG + (i * sizeof(vga_mode4_asprite_t));
-            xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, -100);
-        }
+        // update_single(&ast_l[i], i, ASTEROID_L_CONFIG, sizeof(vga_mode4_asprite_t));
+        unsigned ptr = ASTEROID_L_CONFIG + (i * sizeof(vga_mode4_asprite_t));
+        xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, -100);
     }
     for(int i=0; i<MAX_AST_M; i++) {
-        if (ast_m[i].active) {
-            unsigned ptr = ASTEROID_M_CONFIG + (i * sizeof(vga_mode4_sprite_t));
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-        }
+        unsigned ptr = ASTEROID_M_CONFIG + (i * sizeof(vga_mode4_sprite_t));
+        xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
     }
     for(int i=0; i<MAX_AST_S; i++) {
-        if (ast_s[i].active) {
-            unsigned ptr = ASTEROID_S_CONFIG + (i * sizeof(vga_mode4_sprite_t));
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-        }
+        unsigned ptr = ASTEROID_S_CONFIG + (i * sizeof(vga_mode4_sprite_t));
+        xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
     }
 }
 
@@ -603,4 +585,95 @@ void check_player_asteroid_collision(int16_t px, int16_t py) {
             return;
         }
     }
+}
+
+// Same logic as standard hit, but 0 points awarded
+bool check_asteroid_hit_no_score(int16_t bx, int16_t by) {
+    
+    // ---------------------------------------------------------
+    // 1. Check LARGE Asteroids
+    // ---------------------------------------------------------
+    for (int i = 0; i < MAX_AST_L; i++) {
+        if (!ast_l[i].active) continue;
+        
+        // Large uses Centered Coords (Affine offset)
+        int16_t a_cx = ast_l[i].x + 16;
+        int16_t a_cy = ast_l[i].y + 16;
+        
+        // Radius 14 + Bullet 2 = 16
+        if (abs(a_cx - bx) < 16 && abs(a_cy - by) < 16) {
+            ast_l[i].health--; // 1 Damage
+            
+            if (ast_l[i].health <= 0) {
+                // Destroy & Split
+                ast_l[i].active = false;
+                start_explosion(ast_l[i].x, ast_l[i].y);
+                // NO POINTS AWARDED
+
+                unsigned ptr = ASTEROID_L_CONFIG + (i * sizeof(vga_mode4_asprite_t));
+                xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, -100);
+
+                int16_t spread = 50;
+                spawn_child(AST_MEDIUM, a_cx, a_cy, ast_l[i].vx + spread, ast_l[i].vy - spread);
+                spawn_child(AST_MEDIUM, a_cx, a_cy, ast_l[i].vx - spread, ast_l[i].vy + spread);
+            }
+            return true;
+        }
+    }
+
+    // ---------------------------------------------------------
+    // 2. Check MEDIUM Asteroids
+    // ---------------------------------------------------------
+    for (int i = 0; i < MAX_AST_M; i++) {
+        if (!ast_m[i].active) continue;
+        
+        // Medium uses Top-Left Coords
+        int16_t a_cx = ast_m[i].x + 8;
+        int16_t a_cy = ast_m[i].y + 8;
+
+        // Radius 8 + Bullet 2 = 10
+        if (abs(a_cx - bx) < 10 && abs(a_cy - by) < 10) {
+            ast_m[i].health--;
+            
+            if (ast_m[i].health <= 0) {
+                ast_m[i].active = false;
+                start_explosion(ast_m[i].x, ast_m[i].y);
+                
+                unsigned ptr = ASTEROID_M_CONFIG + (i * sizeof(vga_mode4_sprite_t));
+                xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
+
+                int16_t spread = 80;
+                spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx + spread, ast_m[i].vy - spread);
+                spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx - spread, ast_m[i].vy + spread);
+            }
+            return true;
+        }
+    }
+
+    // ---------------------------------------------------------
+    // 3. Check SMALL Asteroids
+    // ---------------------------------------------------------
+    for (int i = 0; i < MAX_AST_S; i++) {
+        if (!ast_s[i].active) continue;
+        
+        // Small uses Top-Left Coords
+        int16_t a_cx = ast_s[i].x + 4;
+        int16_t a_cy = ast_s[i].y + 4;
+
+        // Radius 4 + Bullet 2 = 6
+        if (abs(a_cx - bx) < 6 && abs(a_cy - by) < 6) {
+            ast_s[i].health--;
+            
+            if (ast_s[i].health <= 0) {
+                ast_s[i].active = false;
+                start_explosion(ast_s[i].x, ast_s[i].y);
+
+                unsigned ptr = ASTEROID_S_CONFIG + (i * sizeof(vga_mode4_sprite_t));
+                xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
+            }
+            return true;
+        }
+    }
+
+    return false;
 }

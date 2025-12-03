@@ -47,4 +47,6 @@ bool check_asteroid_hit_fighter(int16_t fx, int16_t fy);
 // Modifies scores and destroys asteroids if hit
 void check_player_asteroid_collision(int16_t px, int16_t py);
 
+bool check_asteroid_hit_no_score(int16_t x, int16_t y);
+
 #endif

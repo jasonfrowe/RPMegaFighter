@@ -536,6 +536,8 @@ void hide_all_sprites(void)
     earth_x = SCREEN_WIDTH / 2;
     earth_y = SCREEN_HEIGHT / 2;
 
+    init_explosions();
+
 }
 
 // ============================================================================
@@ -790,6 +792,7 @@ int main(void)
                 // Enemy wins - game over
                 stop_music();  // Stop gameplay music
                 reset_music_tempo();  // Reset tempo for next game
+                init_explosions(); // Re-initialize explosions for game over effect
                 show_game_over();
                 
                 // Set flag to exit gameplay loop and return to title screen

@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "powerup.h"
-// #include "asteroids.h"
+#include "asteroids.h"
 
 // ============================================================================
 // CONSTANTS
@@ -430,6 +430,15 @@ void update_ebullets(void)
             xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
             
             continue;
+        }
+
+        if ((i & 1) == (game_frame & 1)) {
+            if (check_asteroid_hit_no_score(ebullets[i].x, ebullets[i].y)) {
+                // Hit!
+                ebullets[i].status = -1; // Kill bullet
+                
+                continue; // Stop processing this bullet
+            }
         }
         
         int16_t bvx = cos_fix[ebullets[i].status];
