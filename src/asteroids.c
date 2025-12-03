@@ -32,6 +32,15 @@ extern unsigned ASTEROID_S_CONFIG;
 
 extern int16_t scroll_dx, scroll_dy;
 
+// Asteroid World Boundaries
+#define AWORLD_PAD 25  // Extra padding beyond screen edges
+#define AWORLD_X1 -AWORLD_PAD  // World boundaries
+#define AWORLD_X2 (SCREEN_WIDTH + AWORLD_PAD)  // World boundaries
+#define AWORLD_Y1 -AWORLD_PAD  // World boundaries
+#define AWORLD_Y2 (SCREEN_HEIGHT + AWORLD_PAD)  // World boundaries
+#define AWORLD_X (AWORLD_X2 - AWORLD_X1)  // Total world width
+#define AWORLD_Y (AWORLD_Y2 - AWORLD_Y1)  // Total world height
+
 // ---------------------------------------------------------
 // INITIALIZATION
 // ---------------------------------------------------------
@@ -74,11 +83,11 @@ static void activate_asteroid(asteroid_t *a, AsteroidType type) {
     // Spawn at Random World Edge (-512 to +512)
     // 50% chance X-Edge, 50% chance Y-Edge
     if (rand16() & 1) {
-        a->x = (rand16() & 1) ? -WORLD_X2 : WORLD_X2;
-        a->y = (int16_t)random(0, WORLD_Y) - WORLD_Y2;
+        a->x = (rand16() & 1) ? AWORLD_X1 : AWORLD_X2;
+        a->y = (int16_t)random(0, AWORLD_Y) + AWORLD_Y2;
     } else {
-        a->x = (int16_t)random(0, WORLD_X) - WORLD_X2;
-        a->y = (rand16() & 1) ? -WORLD_Y2 : WORLD_Y2;
+        a->x = (int16_t)random(0, AWORLD_X) + AWORLD_X2;
+        a->y = (rand16() & 1) ? -AWORLD_Y2 : AWORLD_Y2;
     }
 
     // Velocity (Slower for Large, Faster for Small)
@@ -127,9 +136,9 @@ static void update_single(asteroid_t *a, int index, unsigned base_cfg, int size_
     a->rx += a->vx; if (a->rx >= 256) { a->x++; a->rx -= 256; } else if (a->rx <= -256) { a->x--; a->rx += 256; }
     a->ry += a->vy; if (a->ry >= 256) { a->y++; a->ry -= 256; } else if (a->ry <= -256) { a->y--; a->ry += 256; }
 
-    // 2. World Wrap (-512 to 512)
-    if (a->x < -WORLD_X2) a->x += WORLD_X; else if (a->x > WORLD_X2) a->x -= WORLD_X;
-    if (a->y < -WORLD_Y2) a->y += WORLD_Y; else if (a->y > WORLD_Y2) a->y -= WORLD_Y;
+    // 2. World Wrap (AWORLD_X1 to AWORLD_X2) & (AWORLD_Y1 to AWORLD_Y2)
+    if (a->x < AWORLD_X1) a->x += AWORLD_X; else if (a->x > AWORLD_X2) a->x -= AWORLD_X;
+    if (a->y < AWORLD_Y1) a->y += AWORLD_Y; else if (a->y > AWORLD_Y2) a->y -= AWORLD_Y;
 
 
     a->x -= scroll_dx;
