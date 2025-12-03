@@ -4,6 +4,7 @@
 #include "random.h"         // Needs rand16(), random()
 #include <rp6502.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 // Global Pool
 asteroid_t ast_l[MAX_AST_L];
@@ -25,15 +26,15 @@ void init_asteroids(void) {
 
     // 2. Clear GPU State (Critical for preventing ghosts/corruption)
     // Large Asteroids use 'vga_mode4_asprite_t' (32 bytes)
-    size_t struct_size = sizeof(vga_mode4_asprite_t);
+    // size_t struct_size = sizeof(vga_mode4_asprite_t);
 
-    for (int i = 0; i < MAX_AST_L; i++) {
-        unsigned ptr = ASTEROID_L_CONFIG + (i * struct_size);
+    // for (int i = 0; i < MAX_AST_L; i++) {
+    //     unsigned ptr = ASTEROID_L_CONFIG + (i * struct_size);
         
-        // Move offscreen immediately
-        xram0_struct_set(ptr, vga_mode4_asprite_t, x_pos_px, -100);
-        xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, -100);
-    }
+    //     // Move offscreen immediately
+    //     xram0_struct_set(ptr, vga_mode4_asprite_t, x_pos_px, -100);
+    //     xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, -100);
+    // }
 }
 
 // ---------------------------------------------------------
@@ -43,45 +44,32 @@ void spawn_asteroids(void) {
     size_t struct_size = sizeof(vga_mode4_asprite_t);
 
     for (int i = 0; i < MAX_AST_L; i++) {
-        // If already active, skip
         if (ast_l[i].active) continue;
 
-        // Activate
         ast_l[i].active = true;
-        
-        // Spawn at random locations (simple logic for test)
-        // Range: -512 to +512
-        ast_l[i].x = (int16_t)random(0, 1024) - 512;
-        ast_l[i].y = (int16_t)random(0, 1024) - 512;
+        // Spawn Randomly
+        ast_l[i].x = (int16_t)random(20, SCREEN_WIDTH - 20);
+        ast_l[i].y = (int16_t)random(20, SCREEN_HEIGHT - 20);
         ast_l[i].rx = 0;
         ast_l[i].ry = 0;
-
-        // Random slow velocity
-        // 20 subpixels approx 0.08 pixels/frame
         ast_l[i].vx = (rand16() & 1) ? 20 : -20; 
         ast_l[i].vy = (rand16() & 1) ? 20 : -20;
-        
         ast_l[i].anim_frame = random(0, 3);
 
-        // --- CONFIGURE XRAM ---
         unsigned ptr = ASTEROID_L_CONFIG + (i * struct_size);
 
-        // 1. Point to Pixel Data
-        // Optimization: Large reuse Medium Data (0xF480)
-        // Cast to uint16_t to prevent compiler warnings
-        xram0_struct_set(ptr, vga_mode4_asprite_t, xram_sprite_ptr, (uint16_t)ASTEROID_M_DATA);
+        // Update sprite position (transform matrix already set in init_graphics)
+        xram0_struct_set(ptr, vga_mode4_asprite_t, x_pos_px, ast_l[i].x);
+        xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, ast_l[i].y);
 
-        // 2. Set Size (16x16 source)
-        xram0_struct_set(ptr, vga_mode4_asprite_t, log_size, 4);
-
-        // 3. Set Scale to 2.0 (Double size -> 32x32)
-        // Fixed point 8.8: 0x0100 = 1.0, 0x0200 = 2.0
-        xram0_struct_set(ptr, vga_mode4_asprite_t, transform[0], 0x0200); // Scale X
-        xram0_struct_set(ptr, vga_mode4_asprite_t, transform[3], 0x0200); // Scale Y
+        // xram0_struct_set(ptr, vga_mode4_asprite_t, transform[0], 0x0080);  // cos = 1.0
+        // xram0_struct_set(ptr, vga_mode4_asprite_t, transform[1], 0);  // -sin = 0
+        // xram0_struct_set(ptr, vga_mode4_asprite_t, transform[2], 0);  // x_offset (8 pixels for 16x16)
+        // xram0_struct_set(ptr, vga_mode4_asprite_t, transform[3], 0);  // sin = 0
+        // xram0_struct_set(ptr, vga_mode4_asprite_t, transform[4], 0x0080);  // cos = 1.0
+        // xram0_struct_set(ptr, vga_mode4_asprite_t, transform[5], 0);  // y_offset (8 pixels for 16x16)
         
-        // 4. Reset Rotation/Shear elements to 0
-        xram0_struct_set(ptr, vga_mode4_asprite_t, transform[1], 0);
-        xram0_struct_set(ptr, vga_mode4_asprite_t, transform[2], 0);
+        printf("Spawned Asteroid %d at %d, %d (Size 16x16)\n", i, ast_l[i].x, ast_l[i].y);
     }
 }
 
@@ -91,7 +79,8 @@ void spawn_asteroids(void) {
 void update_asteroids(void) {
     size_t struct_size = sizeof(vga_mode4_asprite_t);
 
-    for (int i = 0; i < MAX_AST_L; i++) {
+    // for (int i = 0; i < MAX_AST_L; i++) {
+    for (int i = 0; i < 1; i++) {
         if (!ast_l[i].active) continue;
 
         // A. Move (Fixed Point Math)
@@ -114,13 +103,30 @@ void update_asteroids(void) {
         if (ast_l[i].y >  WORLD_Y2) ast_l[i].y -= WORLD_Y;
 
         // C. Render
-        // int screen_x = ast_l[i].x - scroll_dx;
-        // int screen_y = ast_l[i].y - scroll_dy;
+        int screen_x = ast_l[i].x;
+        int screen_y = ast_l[i].y;
 
-        unsigned ptr = ASTEROID_L_CONFIG + (i * struct_size);
+        // unsigned ptr = ASTEROID_L_CONFIG + (i * struct_size);
         
-        xram0_struct_set(ptr, vga_mode4_asprite_t, x_pos_px, ast_l[i].x);
-        xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, ast_l[i].y);
+        // xram0_struct_set(ptr, vga_mode4_asprite_t, x_pos_px, ast_l[i].x);
+        // xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, ast_l[i].y);
+
+        // Update sprite position
+        unsigned ptr = ASTEROID_L_CONFIG + i * sizeof(vga_mode4_asprite_t);
+        RIA.step0 = sizeof(vga_mode4_asprite_t);
+        RIA.step1 = sizeof(vga_mode4_asprite_t);
+        RIA.addr0 =  ptr + 12;
+        RIA.addr1 =  ptr + 13;
+        
+        RIA.rw0 = screen_x & 0xFF;
+        RIA.rw1 = (screen_x >> 8) & 0xFF;
+        
+        RIA.addr0 = ptr + 14;
+        RIA.addr1 = ptr + 15;
+        RIA.rw0 = screen_y & 0xFF;
+        RIA.rw1 = (screen_y >> 8) & 0xFF;
+
+        // printf("Asteroid %d at %d, %d\n", i, ast_l[i].x, ast_l[i].y);
         
         // // Optional: Simple Animation (Cycle frames)
         // if ((game_frame % 10) == 0) {

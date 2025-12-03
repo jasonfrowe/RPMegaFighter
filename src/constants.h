@@ -62,6 +62,7 @@ extern unsigned BOMBER_CONFIG;          // Bomber Sprite (8x8)
 
 // 0xEC86 - 0xECA6 32      Config  Asteroid M      4 Sprites (Standard)
 // 0xECA6 - 0xECE6 64      Config  Asteroid S      8 Sprites (Standard)
+extern unsigned ASTEROID_L_CONFIG;
 extern unsigned ASTEROID_M_CONFIG;
 extern unsigned ASTEROID_S_CONFIG;
 
@@ -79,15 +80,16 @@ extern unsigned text_message_addr;
 // 0xF300 - 0xF380 128     Pixels  Powerup         8x8 (16bpp)
 // 0xF380 - 0xF400 128     Pixels  Bomber          8x8 (16bpp)
 // 0xF400 - 0xF480 128     Pixels  Marker          8x8 (16bpp)
-#define EXPLOSION_DATA  0xF200    // Sprite data for explosion animation (not config data)
+#define EXPLOSION_DATA  0xEE40    // Sprite data for explosion animation (not config data)
 // #define POWERUP_DATA      0xF300  <-- defined in powerup.h
-#define BOMBER_DATA     0xF380  //Bomber Sprite (8x8)
+#define BOMBER_DATA     0xFC80  //Bomber Sprite (8x8)
 #define MARKER_DATA     0xF400
 
 // 0xF480 - 0xFC80 2,048   Pixels  Asteroid M      16x16 (4 frames)  <-- shared with Asteroid_L
 // 0xFC80 - 0xFE80 512     Pixels  Asteroid S      8x8 (4 frames)
-#define ASTEROID_M_DATA   0xF480  // Asteroid M Sprite Data (16x16, 4 frames)
-#define ASTEROID_S_DATA   0xFC80  // Asteroid S Sprite Data (8x8, 4 frames)
+#define ASTEROID_L_DATA   0xF200  // Asteroid L Sprite Data (16x16, 4 frames)
+#define ASTEROID_M_DATA   0xFA00  // Asteroid M Sprite Data (16x16, 4 frames)
+#define ASTEROID_S_DATA   0xFC00  // Asteroid S Sprite Data (8x8, 4 frames)
 
 // 0xFE80 - 0xFFC0 320     Gap     Space  Room for ~2 more 16x16 sprites
 // 0xFFC0 - 0xFFFF 64      Config  Sound (PSG) Safety Anchor

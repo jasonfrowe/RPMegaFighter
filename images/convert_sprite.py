@@ -26,59 +26,49 @@ def convert_image(image_path, output_path, mode):
 
             print(f"Processing: {image_path} ({width}x{height})")
             
-            # --- BITMAP MODE (Indexed 8-bit + Palette) ---
             if mode == 'bitmap':
                 print(f"Mode:       8-bit Indexed Color (Palette)")
                 
-                # 1. Quantize to 256 colors (Adaptive Palette)
-                #    This calculates the BEST 256 colors for your specific image.
-                p_im = im.convert("P", palette=Image.ADAPTIVE, colors=256)
+                # Check if this is the Title Screen
+                # We only want to inject the special Rainbow/Grayscale effects for the title.
+                is_title_screen = "title" in os.path.basename(image_path)
+
+                # 1. Quantize
+                if is_title_screen:
+                    # Restrict to 16 colors to leave room for effects
+                    print("Detected Title Screen: Restricting image to 16 colors.")
+                    p_im = im.convert("P", palette=Image.ADAPTIVE, colors=16)
+                else:
+                    # Use full 256 colors for normal backgrounds (e.g. Game Over)
+                    p_im = im.convert("P", palette=Image.ADAPTIVE, colors=256)
                 
-                # 2. Extract and Convert Palette
-                #    Pillow returns [r,g,b, r,g,b...] flat list
+                # 2. Extract Palette
                 raw_pal = p_im.getpalette() 
-
-                # Get range of indices actually used by pixels
-                min_idx, max_idx = p_im.getextrema()
-                print(f"Indices used by image: {min_idx} to {max_idx}")
-
-                # Calculate how many safe slots you have at the end
-                print(f"Safe UI indices: {max_idx + 1} to 255")
-
-                # We need exactly 256 entries. Pillow might return fewer if image is simple.
-                # Pad it just in case.
                 while len(raw_pal) < 768:
                     raw_pal.extend([0, 0, 0])
 
-                # --- PALETTE INJECTION ---
-                
-                # Reserved: 0-15 are used by the Image.
-                
-                # Section A: GRAYSCALE (Indices 16-31)
-                # Useful for Stars
-                print("Injecting Grayscale ramp at indices 16-31")
-                for i in range(16):
-                    # Value from 50 (dim) to 255 (bright)
-                    val = 50 + int((i / 15) * 205)
-                    idx = 16 + i
-                    raw_pal[idx*3]   = val # R
-                    raw_pal[idx*3+1] = val # G
-                    raw_pal[idx*3+2] = val # B
-
-                # Section B: RAINBOW (Indices 32-255)
-                # Useful for High Scores / UI
-                print("Injecting Rainbow spectrum at indices 32-255")
-                start_idx = 32
-                count = 256 - start_idx
-                for i in range(count):
-                    hue = i / count
-                    # HSV to RGB (Full Saturation, Full Value)
-                    r, g, b = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
+                # 3. Inject Effects (ONLY for Title Screen)
+                if is_title_screen:
+                    print("Injecting Grayscale (16-31) and Rainbow (32-255) ramps...")
                     
-                    idx = start_idx + i
-                    raw_pal[idx*3]   = int(r * 255)
-                    raw_pal[idx*3+1] = int(g * 255)
-                    raw_pal[idx*3+2] = int(b * 255)
+                    # Section A: GRAYSCALE (Indices 16-31)
+                    for i in range(16):
+                        val = 50 + int((i / 15) * 205)
+                        idx = 16 + i
+                        raw_pal[idx*3]   = val
+                        raw_pal[idx*3+1] = val
+                        raw_pal[idx*3+2] = val
+
+                    # Section B: RAINBOW (Indices 32-255)
+                    start_idx = 32
+                    count = 256 - start_idx
+                    for i in range(count):
+                        hue = i / count
+                        r, g, b = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
+                        idx = start_idx + i
+                        raw_pal[idx*3]   = int(r * 255)
+                        raw_pal[idx*3+1] = int(g * 255)
+                        raw_pal[idx*3+2] = int(b * 255)
                 
                 # -------------------------
 

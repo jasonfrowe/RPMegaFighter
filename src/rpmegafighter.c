@@ -124,21 +124,8 @@ static void init_graphics(void)
     // Enable Mode 3 bitmap (4-bit color)
     xregn(1, 0, 1, 4, 3, 3, BITMAP_CONFIG, 1);
     
-    // Set up Earth background sprite (VGA Mode 4 - regular sprite)
-    EARTH_CONFIG = BITMAP_CONFIG + sizeof(vga_mode3_config_t);
-    
-    // Initialize Earth sprite centered on screen
-    earth_x = SCREEN_WIDTH / 2;
-    earth_y = SCREEN_HEIGHT / 2;
-    
-    xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, x_pos_px, earth_x);
-    xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, y_pos_px, earth_y);
-    xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, xram_sprite_ptr, EARTH_DATA);
-    xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, log_size, 5);  // 32x32 sprite (2^5)
-    xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, has_opacity_metadata, false);
-    
     // Set up player spacecraft sprite (VGA Mode 4 - affine sprite with rotation)
-    SPACECRAFT_CONFIG = EARTH_CONFIG + sizeof(vga_mode4_sprite_t);
+    SPACECRAFT_CONFIG = BITMAP_CONFIG + sizeof(vga_mode3_config_t);
     
     // Initialize rotation transform matrix (identity at rotation 0)
     int16_t initial_rotation = get_player_rotation();
@@ -159,23 +146,41 @@ static void init_graphics(void)
     // Set up Asteroid L sprite (VGA Mode 4 - affine sprite)
     ASTEROID_L_CONFIG = SPACECRAFT_CONFIG + sizeof(vga_mode4_asprite_t);
 
-    // 3. Set Scale to 200% (Makes it look 32x32)
-    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, transform[0], 0x0200); // SX = 2.0
-    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, transform[1], 0x0000); // XY = 0.0
-    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, transform[2], 0x0000); // TX = 0.0
-    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, transform[3], 0x0200); // SY = 2.0
-    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, transform[4], 0x0000); // TZ = 0.0
-    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, transform[5], 0x0000); // TY = 0.0
+    for (uint8_t i = 0; i < COUNT_ASTEROID_L; i++) {
+        unsigned ptr = ASTEROID_L_CONFIG + i * sizeof(vga_mode4_asprite_t);
 
-    // Set sprite position and properties
-    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, x_pos_px, -100); // Start offscreen
-    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, y_pos_px, -100);
-    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, xram_sprite_ptr, ASTEROID_M_DATA);
-    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, log_size, 4);  // 16x16 sprite (2^4)
-    xram0_struct_set(ASTEROID_L_CONFIG, vga_mode4_asprite_t, has_opacity_metadata, false);
+        // Set identity transform with proper centering for 16x16 sprite
+        // For no rotation: cos=256 (1.0), sin=0, offsets center the 16x16 sprite
+        xram0_struct_set(ptr, vga_mode4_asprite_t, transform[0], 0x0100);  // cos = 1.0
+        xram0_struct_set(ptr, vga_mode4_asprite_t, transform[1], 0);  // -sin = 0
+        xram0_struct_set(ptr, vga_mode4_asprite_t, transform[2], 0);  //
+        xram0_struct_set(ptr, vga_mode4_asprite_t, transform[3], 0);  // sin = 0
+        xram0_struct_set(ptr, vga_mode4_asprite_t, transform[4], 0x0100);  // cos = 1.0
+        xram0_struct_set(ptr, vga_mode4_asprite_t, transform[5], 0);  // 
+
+        // Set sprite position and properties
+        xram0_struct_set(ptr, vga_mode4_asprite_t, x_pos_px, -100); // Start offscreen
+        xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, -100);
+        xram0_struct_set(ptr, vga_mode4_asprite_t, xram_sprite_ptr, ASTEROID_L_DATA);
+        xram0_struct_set(ptr, vga_mode4_asprite_t, log_size, 5);  // 32x32 sprite (2^5)
+        xram0_struct_set(ptr, vga_mode4_asprite_t, has_opacity_metadata, false);
+    }
+
+    // Set up Earth background sprite (VGA Mode 4 - regular sprite)
+    EARTH_CONFIG = ASTEROID_L_CONFIG + COUNT_ASTEROID_L * sizeof(vga_mode4_asprite_t);
+    
+    // Initialize Earth sprite centered on screen
+    earth_x = SCREEN_WIDTH / 2;
+    earth_y = SCREEN_HEIGHT / 2;
+    
+    xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, x_pos_px, earth_x);
+    xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, y_pos_px, earth_y);
+    xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, xram_sprite_ptr, EARTH_DATA);
+    xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, log_size, 5);  // 32x32 sprite (2^5)
+    xram0_struct_set(EARTH_CONFIG, vga_mode4_sprite_t, has_opacity_metadata, false);
 
     // Set up fighter sprites (VGA Mode 4 - regular sprites)
-    FIGHTER_CONFIG = ASTEROID_L_CONFIG + COUNT_ASTEROID_L * sizeof(vga_mode4_asprite_t);
+    FIGHTER_CONFIG = EARTH_CONFIG +  sizeof(vga_mode4_sprite_t);
 
     for (uint8_t i = 0; i < MAX_FIGHTERS; i++) {
         unsigned ptr = FIGHTER_CONFIG + i * sizeof(vga_mode4_sprite_t);
@@ -246,26 +251,38 @@ static void init_graphics(void)
     xram0_struct_set(BOMBER_CONFIG, vga_mode4_sprite_t, has_opacity_metadata, false);
 
     ASTEROID_M_CONFIG = BOMBER_CONFIG + sizeof(vga_mode4_sprite_t);
-    xram0_struct_set(ASTEROID_M_CONFIG, vga_mode4_sprite_t, x_pos_px, -100);  // Start offscreen
-    xram0_struct_set(ASTEROID_M_CONFIG, vga_mode4_sprite_t, y_pos_px, -100);
-    xram0_struct_set(ASTEROID_M_CONFIG, vga_mode4_sprite_t, xram_sprite_ptr, ASTEROID_M_DATA);
-    xram0_struct_set(ASTEROID_M_CONFIG, vga_mode4_sprite_t, log_size, 4);  // 16x16 sprite (2^4)
-    xram0_struct_set(ASTEROID_M_CONFIG, vga_mode4_sprite_t, has_opacity_metadata, false);
-
+    for (uint8_t i = 0; i < COUNT_ASTEROID_M; i++) {
+        unsigned ptr = ASTEROID_M_CONFIG + i * sizeof(vga_mode4_asprite_t);
+        xram0_struct_set(ptr, vga_mode4_asprite_t, x_pos_px, -100);  // Start offscreen
+        xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, -100);
+        xram0_struct_set(ptr, vga_mode4_asprite_t, xram_sprite_ptr, ASTEROID_M_DATA);
+        xram0_struct_set(ptr, vga_mode4_asprite_t, log_size, 4);  // 16x16 sprite (2^4)
+        xram0_struct_set(ptr, vga_mode4_asprite_t, has_opacity_metadata, false);
+    }
+        
     ASTEROID_S_CONFIG = ASTEROID_M_CONFIG + COUNT_ASTEROID_M * sizeof(vga_mode4_sprite_t);
-    xram0_struct_set(ASTEROID_S_CONFIG, vga_mode4_sprite_t, x_pos_px, -100);  // Start offscreen
-    xram0_struct_set(ASTEROID_S_CONFIG, vga_mode4_sprite_t, y_pos_px, -100);
-    xram0_struct_set(ASTEROID_S_CONFIG, vga_mode4_sprite_t, xram_sprite_ptr, ASTEROID_S_DATA);
-    xram0_struct_set(ASTEROID_S_CONFIG, vga_mode4_sprite_t, log_size, 5);  // 32x32 sprite (2^5)
-    xram0_struct_set(ASTEROID_S_CONFIG, vga_mode4_sprite_t, has_opacity_metadata, false);
+    for (uint8_t i = 0; i < COUNT_ASTEROID_S; i++) {
+        unsigned ptr = ASTEROID_S_CONFIG + i * sizeof(vga_mode4_asprite_t);
+        xram0_struct_set(ptr, vga_mode4_asprite_t, x_pos_px, -100);  // Start offscreen
+        xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, -100);
+        xram0_struct_set(ptr, vga_mode4_asprite_t, xram_sprite_ptr, ASTEROID_S_DATA);
+        xram0_struct_set(ptr, vga_mode4_asprite_t, log_size, 3);  // 8x8 sprite (2^3)
+        xram0_struct_set(ptr, vga_mode4_asprite_t, has_opacity_metadata, false);
+    }
 
     // Enable sprite modes:
-    // First enable Earth sprite (background layer)
-    xregn(1, 0, 1, 5, 4, 0, EARTH_CONFIG, 1, 0);
     // Then enable affine sprites (player) - 1 sprite at SPACECRAFT_CONFIG
     xregn(1, 0, 1, 5, 4, 1, SPACECRAFT_CONFIG, 1 + COUNT_ASTEROID_L, 2);
+    // First enable Earth sprite (background layer)
+    xregn(1, 0, 1, 5, 4, 0, EARTH_CONFIG, 1, 0);
     // Finally enable regular sprites (fighters + ebullets + bullets + sbullets + power ups + bomber + 2 x asteroids) - all regular sprites in one call
-    xregn(1, 0, 1, 5, 4, 0, FIGHTER_CONFIG, MAX_FIGHTERS + MAX_EBULLETS + MAX_BULLETS + MAX_SBULLETS + 2 + COUNT_ASTEROID_L + COUNT_ASTEROID_M, 1);
+    xregn(1, 0, 1, 5, 4, 0, FIGHTER_CONFIG, MAX_FIGHTERS + MAX_EBULLETS + MAX_BULLETS + MAX_SBULLETS + 2 + COUNT_ASTEROID_M + COUNT_ASTEROID_S, 1);
+
+    // xregn(1, 0, 1, 6, 
+    //   3, BITMAP_CONFIG, 
+    //   4, SPACECRAFT_CONFIG, 
+    //   4, EARTH_CONFIG
+    // );
 
     // Enable text mode for on-screen messages
 
@@ -276,15 +293,15 @@ static void init_graphics(void)
     // Debug: print config addresses and sizes to help diagnose overlaps
     printf("Config addresses:\n");
     printf("  BITMAP_CONFIG=0x%X\n", BITMAP_CONFIG);
-    printf("  EARTH_CONFIG=0x%X\n", EARTH_CONFIG);
     printf("  SPACECRAFT_CONFIG=0x%X\n", SPACECRAFT_CONFIG);
     printf("  ASTEROID_L_CONFIG=0x%X\n", ASTEROID_L_CONFIG);
-    printf("  BOMBER_CONFIG=0x%X\n", BOMBER_CONFIG);
+    printf("  EARTH_CONFIG=0x%X\n", EARTH_CONFIG);
     printf("  FIGHTER_CONFIG=0x%X\n", FIGHTER_CONFIG);
     printf("  EBULLET_CONFIG=0x%X\n", EBULLET_CONFIG);
     printf("  BULLET_CONFIG=0x%X\n", BULLET_CONFIG);
     printf("  SBULLET_CONFIG=0x%X\n", SBULLET_CONFIG);
     printf("  POWERUP_CONFIG=0x%X\n", POWERUP_CONFIG);
+    printf("  BOMBER_CONFIG=0x%X\n", BOMBER_CONFIG);
     printf("  ASTEROID_M_CONFIG=0x%X\n", ASTEROID_M_CONFIG);
     printf("  ASTEROID_S_CONFIG=0x%X\n", ASTEROID_S_CONFIG);
     printf("  TEXT_CONFIG=0x%X\n", TEXT_CONFIG);
@@ -682,7 +699,7 @@ int main(void)
             update_sbullets();
             update_ebullets();
             // update_bomber();
-            update_asteroids();
+            // update_asteroids();
 
             // Update scrolling based on player movement
             update_powerup();

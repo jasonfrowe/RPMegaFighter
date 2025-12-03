@@ -36,11 +36,12 @@ rp6502_asset(rpmegafighter 0x1E980 images/fighter.bin)
 rp6502_asset(rpmegafighter 0x1E9A0 images/ebullet.bin)
 rp6502_asset(rpmegafighter 0x1E9A8 images/bullet.bin)
 rp6502_asset(rpmegafighter 0x1E9B0 images/sbullet.bin)
-rp6502_asset(rpmegafighter 0x1F200 images/fighter_explode.bin)
-rp6502_asset(rpmegafighter 0x1F300 images/powerup.bin)
-rp6502_asset(rpmegafighter 0x1F380 images/bomber.bin)
-rp6502_asset(rpmegafighter 0x1F480 images/asteroid_M.bin)
-rp6502_asset(rpmegafighter 0x1FC80 images/asteroid_S.bin)
+rp6502_asset(rpmegafighter 0x1EE40 images/fighter_explode.bin)
+rp6502_asset(rpmegafighter 0x1EF40 images/powerup.bin)
+rp6502_asset(rpmegafighter 0x1FC80 images/bomber.bin)
+rp6502_asset(rpmegafighter 0x1F200 images/asteroid_L.bin)
+rp6502_asset(rpmegafighter 0x1FA00 images/asteroid_M.bin)
+rp6502_asset(rpmegafighter 0x1FC00 images/asteroid_S.bin)
 rp6502_executable(rpmegafighter
     spaceship2.bin.rp6502
     Earth.bin.rp6502
@@ -51,6 +52,9 @@ rp6502_executable(rpmegafighter
     fighter_explode.bin.rp6502
     powerup.bin.rp6502
     bomber.bin.rp6502
+    asteroid_L.bin.rp6502
+    asteroid_M.bin.rp6502
+    asteroid_S.bin.rp6502
     DATA file
     RESET file
     ${CMAKE_CURRENT_SOURCE_DIR}/src/rpmegafighter.hlp
