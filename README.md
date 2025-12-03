@@ -52,9 +52,25 @@ If the default controls do not suit your gamepad, you can remap them using the i
 **To reset to default controls:** Simply delete the `JOYSTICK.DAT` file from your storage.
 
 ## Points Strategy
-- Destroying basic enemy ships grants **1 point**.
+**Scoring Points:**
+- Basic Enemy Ships: **1 point**.
+- Small Asteroid: **1 point**.
+- Medium Asteroid: **2 points**.
+- Large Asteroid: **5 points**.
+
+**Losing Points (Enemy Score):**
 - If the enemy shoots you, the enemy gets **1 point**.
-- If you crash into the enemy, the enemy gets **2 points**!
+- If you crash into an enemy ship, the enemy gets **2 points**.
+
+## Asteroid Hazards
+The battlefield is cluttered with dangerous space debris. You must blast them apart to clear a path.
+
+- **Large Asteroids:** Massive rotating rocks that require sustained fire to destroy. When broken, they split into two medium asteroids. 
+  - **WARNING:** Crashing into a large asteroid results in **Immediate Game Over**.
+- **Medium Asteroids:** Faster remnants. They split into two small rocks when destroyed. 
+  - *Penalty:* Crashing into these removes **20 points** from your score.
+- **Small Asteroids:** Fast-moving debris. 
+  - *Penalty:* Crashing into these removes **10 points** from your score.
 
 ## Heads Up Display
 
@@ -111,7 +127,7 @@ victory.
 - **Platform:** [Picocomputer 6502](https://picocomputer.github.io/)
 - **Developer:** Jason Rowe
   - email: jason@jasonrowe.org
-- **Release Date:** Alpha - 2025-11-30
+- **Release Date:** Alpha - 2025-12-03
 
 ## Build Option: ENABLE_INPUT_TEST
 
