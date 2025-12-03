@@ -100,7 +100,7 @@ static bool game_over = false;
 //Asteroid functions
 extern void init_asteroids(void);
 extern void update_asteroids(void);
-extern void spawn_asteroids(void);
+extern void spawn_asteroid_wave(int level);
 
 // ============================================================================
 // GRAPHICS INITIALIZATION
@@ -252,22 +252,22 @@ static void init_graphics(void)
 
     ASTEROID_M_CONFIG = BOMBER_CONFIG + sizeof(vga_mode4_sprite_t);
     for (uint8_t i = 0; i < COUNT_ASTEROID_M; i++) {
-        unsigned ptr = ASTEROID_M_CONFIG + i * sizeof(vga_mode4_asprite_t);
-        xram0_struct_set(ptr, vga_mode4_asprite_t, x_pos_px, -100);  // Start offscreen
-        xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, -100);
-        xram0_struct_set(ptr, vga_mode4_asprite_t, xram_sprite_ptr, ASTEROID_M_DATA);
-        xram0_struct_set(ptr, vga_mode4_asprite_t, log_size, 4);  // 16x16 sprite (2^4)
-        xram0_struct_set(ptr, vga_mode4_asprite_t, has_opacity_metadata, false);
+        unsigned ptr = ASTEROID_M_CONFIG + i * sizeof(vga_mode4_sprite_t);
+        xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);  // Start offscreen
+        xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
+        xram0_struct_set(ptr, vga_mode4_sprite_t, xram_sprite_ptr, ASTEROID_M_DATA);
+        xram0_struct_set(ptr, vga_mode4_sprite_t, log_size, 4);  // 16x16 sprite (2^4)
+        xram0_struct_set(ptr, vga_mode4_sprite_t, has_opacity_metadata, false);
     }
         
     ASTEROID_S_CONFIG = ASTEROID_M_CONFIG + COUNT_ASTEROID_M * sizeof(vga_mode4_sprite_t);
     for (uint8_t i = 0; i < COUNT_ASTEROID_S; i++) {
-        unsigned ptr = ASTEROID_S_CONFIG + i * sizeof(vga_mode4_asprite_t);
-        xram0_struct_set(ptr, vga_mode4_asprite_t, x_pos_px, -100);  // Start offscreen
-        xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, -100);
-        xram0_struct_set(ptr, vga_mode4_asprite_t, xram_sprite_ptr, ASTEROID_S_DATA);
-        xram0_struct_set(ptr, vga_mode4_asprite_t, log_size, 3);  // 8x8 sprite (2^3)
-        xram0_struct_set(ptr, vga_mode4_asprite_t, has_opacity_metadata, false);
+        unsigned ptr = ASTEROID_S_CONFIG + i * sizeof(vga_mode4_sprite_t);
+        xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);  // Start offscreen
+        xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
+        xram0_struct_set(ptr, vga_mode4_sprite_t, xram_sprite_ptr, ASTEROID_S_DATA);
+        xram0_struct_set(ptr, vga_mode4_sprite_t, log_size, 3);  // 8x8 sprite (2^3)
+        xram0_struct_set(ptr, vga_mode4_sprite_t, has_opacity_metadata, false);
     }
 
     // Enable sprite modes:
@@ -277,6 +277,8 @@ static void init_graphics(void)
     xregn(1, 0, 1, 5, 4, 0, EARTH_CONFIG, 1, 0);
     // Finally enable regular sprites (fighters + ebullets + bullets + sbullets + power ups + bomber + 2 x asteroids) - all regular sprites in one call
     xregn(1, 0, 1, 5, 4, 0, FIGHTER_CONFIG, MAX_FIGHTERS + MAX_EBULLETS + MAX_BULLETS + MAX_SBULLETS + 2 + COUNT_ASTEROID_M + COUNT_ASTEROID_S, 1);
+
+
 
     // xregn(1, 0, 1, 6, 
     //   3, BITMAP_CONFIG, 
@@ -581,23 +583,18 @@ int main(void)
         
         // Start gameplay music
         start_gameplay_music();
-
-        // spawn_bomber(game_level); 
-        spawn_asteroids();
         
         printf("Starting game loop...\n\n");
         
         // Gameplay loop
         game_over = false;
         bool demo_input_was_pressed = false;
-        uint16_t game_frame = 0;
+        // uint16_t game_frame = 0;
         while (!game_over) {
             // Wait for vertical sync (60 Hz)
             if (RIA.vsync == vsync_last)
                 continue;
             vsync_last = RIA.vsync;
-
-            game_frame++;
 
             // Read input
             handle_input(); 
@@ -699,7 +696,8 @@ int main(void)
             update_sbullets();
             update_ebullets();
             // update_bomber();
-            // update_asteroids();
+            spawn_asteroid_wave(game_level);
+            update_asteroids();
 
             // Update scrolling based on player movement
             update_powerup();

@@ -49,7 +49,7 @@ extern int16_t player_vx_applied, player_vy_applied;
 extern int16_t scroll_dx, scroll_dy;
 extern int16_t enemy_score;
 extern int16_t game_level;
-extern uint16_t game_frame;
+// extern uint16_t game_frame;
 
 // Sprite configuration addresses
 extern unsigned FIGHTER_CONFIG;

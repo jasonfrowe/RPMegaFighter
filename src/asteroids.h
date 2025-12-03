@@ -4,24 +4,39 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-// Simplify: Just one type for now (Large)
+// Types
+typedef enum {
+    AST_LARGE = 0,
+    AST_MEDIUM,
+    AST_SMALL
+} AsteroidType;
+
+// Object Structure
 typedef struct {
     bool active;
-    int16_t x, y;       // World position
+    int16_t x, y;       // World Position
     int16_t rx, ry;     // Sub-pixel remainders (for smooth movement)
-    int16_t vx, vy;     // Velocity
-    uint8_t anim_frame;
+    int16_t vx, vy;     // Velocity (Speed)
+    uint8_t anim_frame; // For rotation/animation
+    int8_t health;      // Hit points
+    AsteroidType type;
 } asteroid_t;
 
-// We defined space for 2 Large Asteroids in the memory map
+// Pools
 #define MAX_AST_L 2
+#define MAX_AST_M 4
+#define MAX_AST_S 8
 
-// Global Array
 extern asteroid_t ast_l[MAX_AST_L];
+extern asteroid_t ast_m[MAX_AST_M];
+extern asteroid_t ast_s[MAX_AST_S];
 
-// Basic Interface
+// Functions
 void init_asteroids(void);
-void spawn_asteroids(void); // Spawns the initial 2
-void update_asteroids(void); // Move and Render
+void spawn_asteroid_wave(int level); // Call every frame
+void update_asteroids(void);         // Call every frame
+
+// Returns true if the bullet hit an asteroid (so the bullet should die)
+bool check_asteroid_hit(int16_t x, int16_t y);
 
 #endif

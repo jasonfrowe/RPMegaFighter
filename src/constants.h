@@ -87,9 +87,9 @@ extern unsigned text_message_addr;
 
 // 0xF480 - 0xFC80 2,048   Pixels  Asteroid M      16x16 (4 frames)  <-- shared with Asteroid_L
 // 0xFC80 - 0xFE80 512     Pixels  Asteroid S      8x8 (4 frames)
-#define ASTEROID_L_DATA   0xF200  // Asteroid L Sprite Data (16x16, 4 frames)
-#define ASTEROID_M_DATA   0xFA00  // Asteroid M Sprite Data (16x16, 4 frames)
-#define ASTEROID_S_DATA   0xFC00  // Asteroid S Sprite Data (8x8, 4 frames)
+#define ASTEROID_L_DATA   0xF200  // Asteroid L Sprite Data (32x32)
+#define ASTEROID_M_DATA   0xFA00  // Asteroid M Sprite Data (16x16)
+#define ASTEROID_S_DATA   0xFC00  // Asteroid S Sprite Data (8x8)
 
 // 0xFE80 - 0xFFC0 320     Gap     Space  Room for ~2 more 16x16 sprites
 // 0xFFC0 - 0xFFFF 64      Config  Sound (PSG) Safety Anchor

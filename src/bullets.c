@@ -1,11 +1,12 @@
 #include "bullets.h"
 #include "constants.h"
+#include "fighters.h"
 #include "sound.h"
 #include <rp6502.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include "sbullets.h"
-// #include "asteroids.h"
+#include "asteroids.h"
 
 // ============================================================================
 // CONSTANTS
@@ -27,8 +28,7 @@ extern const int16_t sin_fix[25];
 extern const int16_t cos_fix[25];
 
 // Collision check from fighters module
-extern bool check_bullet_fighter_collision(int16_t bullet_x, int16_t bullet_y,
-                                          int16_t* player_score_out, int16_t* game_score_out);
+extern bool check_asteroid_hit(int16_t x, int16_t y);
 
 // Collision check from asteroids module
 // extern bool check_asteroid_hit(int16_t bx, int16_t by);
@@ -89,6 +89,17 @@ void update_bullets(void)
             xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
             
             goto next_bullet;  // Skip rest of bullet update
+        }
+
+        // --- NEW: Check Asteroid Collision ---
+        if (check_asteroid_hit(bullets[i].x, bullets[i].y)) {
+            bullets[i].status = -1; // Kill bullet
+            
+            // Hide bullet sprite immediately
+            unsigned ptr = BULLET_CONFIG + (i * sizeof(vga_mode4_sprite_t));
+            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
+            
+            goto next_bullet; // Move to next bullet
         }
 
         // Check collision with asteroids
