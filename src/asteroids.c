@@ -79,12 +79,15 @@ void init_asteroids(void) {
 // SPAWNING
 // ---------------------------------------------------------
 // Internal helper to setup a specific asteroid
-static void activate_asteroid(asteroid_t *a, AsteroidType type) {
+static void activate_asteroid(asteroid_t *a, AsteroidType type, int level) {
     a->active = true;
     a->type = type;
     a->rx = 0; 
     a->ry = 0;
     a->anim_frame = random(0, MAX_ROTATION); // Random start angle
+
+    // 1. Calculate Effective Level (Cap at 10)
+    int eff_lvl = (level > 10) ? 10 : level;
 
     // Spawn at Random World Edge (-512 to +512)
     // 50% chance X-Edge, 50% chance Y-Edge
@@ -97,26 +100,53 @@ static void activate_asteroid(asteroid_t *a, AsteroidType type) {
     }
 
     // Velocity (Slower for Large, Faster for Small)
-    int speed_base = (type == AST_LARGE) ? 64 : ((type == AST_MEDIUM) ? 128 : 256);
+    // int speed_base = (type == AST_LARGE) ? 64 : ((type == AST_MEDIUM) ? 128 : 256);
+
+    // 3. Scale Velocity (Base + Scaling)
+    // Large:  Starts 24, max 50  (~0.2 px/frame)
+    // Medium: Starts 45, max 90  (~0.35 px/frame)
+    // Small:  Starts 68, max 140 (~0.55 px/frame)
+    int speed_base;
+    if (type == AST_LARGE)      speed_base = 64 + (eff_lvl * 6);
+    else if (type == AST_MEDIUM) speed_base = 128 + (eff_lvl * 8);
+    else                        speed_base = 192 + (eff_lvl * 10);
+
     a->vx = (rand16() & 1) ? speed_base : -speed_base;
     a->vy = (rand16() & 1) ? speed_base : -speed_base;
 
+
     // Health
-    if (type == AST_LARGE) a->health = 20;
-    else if (type == AST_MEDIUM) a->health = 10;
-    else a->health = 2;
+    // if (type == AST_LARGE) a->health = 20;
+    // else if (type == AST_MEDIUM) a->health = 10;
+    // else a->health = 2;
+
+    // 4. Scale Health
+    // Large:  Starts 22, max 40
+    // Medium: Starts 7,  max 16
+    // Small:  Starts 2,  max 4
+    if (type == AST_LARGE)       a->health = 20 + (eff_lvl * 2);
+    else if (type == AST_MEDIUM) a->health = 6 + eff_lvl;
+    else                         a->health = 2 + (eff_lvl / 5);
 
 }
 
+static int spawn_timer = 0;
+
 void spawn_asteroid_wave(int level) {
-    // Only spawn Large for now
-    // 2% chance per frame to try spawning
+    if (spawn_timer > 0) {
+        spawn_timer--;
+        return;
+    }
+
     if (rand16() % 100 < 2) {
         for (int i = 0; i < MAX_AST_L; i++) {
             if (!ast_l[i].active) {
-                activate_asteroid(&ast_l[i], AST_LARGE);
-                printf("Spawned Large Asteroid %d at %d, %d\n", i, ast_l[i].x, ast_l[i].y);
-                break; // Only spawn one per frame
+                // Pass the level to scaling logic
+                activate_asteroid(&ast_l[i], AST_LARGE, level);
+                
+                printf("Spawned Large Asteroid %d (Lvl %d)\n", i, level);
+                spawn_timer = 120; // 2 second cooldown
+                break; 
             }
         }
     }
