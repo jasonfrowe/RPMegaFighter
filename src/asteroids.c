@@ -86,8 +86,8 @@ static void activate_asteroid(asteroid_t *a, AsteroidType type, int level) {
     a->ry = 0;
     a->anim_frame = random(0, MAX_ROTATION); // Random start angle
 
-    // 1. Calculate Effective Level (Cap at 10)
-    int eff_lvl = (level > 10) ? 10 : level;
+    // 1. Calculate Effective Level (Cap at 20)
+    int eff_lvl = (level > 20) ? 20 : level;
 
     // Spawn at Random World Edge (-512 to +512)
     // 50% chance X-Edge, 50% chance Y-Edge
@@ -107,9 +107,9 @@ static void activate_asteroid(asteroid_t *a, AsteroidType type, int level) {
     // Medium: Starts 45, max 90  (~0.35 px/frame)
     // Small:  Starts 68, max 140 (~0.55 px/frame)
     int speed_base;
-    if (type == AST_LARGE)      speed_base = 64 + (eff_lvl * 6);
-    else if (type == AST_MEDIUM) speed_base = 128 + (eff_lvl * 8);
-    else                        speed_base = 192 + (eff_lvl * 10);
+    if (type == AST_LARGE)      speed_base = 64 * eff_lvl;
+    else if (type == AST_MEDIUM) speed_base = 128 * eff_lvl;
+    else                        speed_base = 256 * eff_lvl;
 
     a->vx = (rand16() & 1) ? speed_base : -speed_base;
     a->vy = (rand16() & 1) ? speed_base : -speed_base;
@@ -157,8 +157,26 @@ void spawn_asteroid_wave(int level) {
 // ---------------------------------------------------------
 static void update_single(asteroid_t *a, int index, unsigned base_cfg, int size_bytes) {
     // 1. Movement (Fixed Point)
-    a->rx += a->vx; if (a->rx >= 256) { a->x++; a->rx -= 256; } else if (a->rx <= -256) { a->x--; a->rx += 256; }
-    a->ry += a->vy; if (a->ry >= 256) { a->y++; a->ry -= 256; } else if (a->ry <= -256) { a->y--; a->ry += 256; }
+    // a->rx += a->vx; if (a->rx >= 256) { a->x++; a->rx -= 256; } else if (a->rx <= -256) { a->x--; a->rx += 256; }
+    // a->ry += a->vy; if (a->ry >= 256) { a->y++; a->ry -= 256; } else if (a->ry <= -256) { a->y--; a->ry += 256; }
+
+    // 1. MOVEMENT (Fixed Point - High Speed Capable)
+    
+    // X Axis
+    a->rx += a->vx;
+    int16_t whole_x = a->rx / 256; // Integer Division (e.g., 600 / 256 = 2)
+    if (whole_x != 0) {
+        a->x += whole_x;
+        a->rx %= 256; // Keep only the remainder (e.g., 600 % 256 = 88)
+    }
+
+    // Y Axis
+    a->ry += a->vy;
+    int16_t whole_y = a->ry / 256;
+    if (whole_y != 0) {
+        a->y += whole_y;
+        a->ry %= 256;
+    }
 
     // 2. World Wrap (AWORLD_X1 to AWORLD_X2) & (AWORLD_Y1 to AWORLD_Y2)
     if (a->x < AWORLD_X1) a->x += AWORLD_X; else if (a->x > AWORLD_X2) a->x -= AWORLD_X;

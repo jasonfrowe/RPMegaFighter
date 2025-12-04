@@ -138,7 +138,7 @@ extern int16_t enemy_score;
 #define INITIAL_FIGHTER_SPEED_MIN 16  // Initial minimum fighter speed
 #define INITIAL_FIGHTER_SPEED_MAX 256 // Initial maximum fighter speed
 #define FIGHTER_SPEED_INCREASE    32  // Fighter speed increase per level
-#define MAX_FIGHTER_SPEED         512 // Maximum cap on fighter speed
+#define MAX_FIGHTER_SPEED         384 // Maximum cap on fighter speed
 
 // Scoring
 #define SCORE_TO_WIN        100
