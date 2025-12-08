@@ -37,6 +37,7 @@ extern void start_explosion(int16_t x, int16_t y);
 
 extern int16_t scroll_dx, scroll_dy;
 extern int player_score, enemy_score;
+extern int16_t game_score, game_level;
 
 // Asteroid World Boundaries
 #define AWORLD_PAD 100  // Extra padding beyond screen edges
@@ -111,9 +112,43 @@ static void activate_asteroid(asteroid_t *a, AsteroidType type, int level) {
     else if (type == AST_MEDIUM) speed_base = 128 * eff_lvl;
     else                        speed_base = 256 * eff_lvl;
 
-    a->vx = (rand16() & 1) ? speed_base : -speed_base;
-    a->vy = (rand16() & 1) ? speed_base : -speed_base;
+    // Safety: Ensure speed is at least something moving
+    if (speed_base < 32) speed_base = 32;
 
+    // Older gives diagonals only.
+    // a->vx = (rand16() & 1) ? speed_base : -speed_base;
+    // a->vy = (rand16() & 1) ? speed_base : -speed_base;
+
+    // RANDOMIZE DIRECTION (The Fix)
+    // ----------------------------------------------------
+    // Instead of using speed_base for both, pick a random magnitude 
+    // between 25% and 100% of speed_base for EACH axis independently.
+    // This creates various angles (shallow, steep, etc).
+    int16_t mag_x = random(speed_base / 4, speed_base);
+    int16_t mag_y = random(speed_base / 4, speed_base);
+
+
+    // INTELLIGENT DIRECTION
+    // ----------------------------------------------------
+    // If spawned on the Left Edge (-512), force velocity Positive (Right).
+    // If spawned on the Right Edge (512), force velocity Negative (Left).
+    // Otherwise, randomize.
+    
+    if (a->x <= AWORLD_X1) {
+        a->vx = mag_x; // Move Right
+    } else if (a->x >= AWORLD_X2) {
+        a->vx = -mag_x; // Move Left
+    } else {
+        a->vx = (rand16() & 1) ? mag_x : -mag_x; // Random
+    }
+
+    if (a->y <= AWORLD_Y1) {
+        a->vy = mag_y; // Move Down
+    } else if (a->y >= AWORLD_Y2) {
+        a->vy = -mag_y; // Move Up
+    } else {
+        a->vy = (rand16() & 1) ? mag_y : -mag_y; // Random
+    }
 
     // Health
     // if (type == AST_LARGE) a->health = 20;
@@ -345,7 +380,8 @@ bool check_asteroid_hit(int16_t bx, int16_t by) {
                     // DESTROY LARGE -> Spawn 2 Mediums
                     ast_l[i].active = false;
                     start_explosion(ast_l[i].x, ast_l[i].y);
-                    player_score += 5;
+                    player_score += 15;
+                    game_score += 15 * game_level; // Update game score
 
                     // Split velocities (diverge from parent)
                     // Parent velocity +/- 30 subpixels
@@ -376,7 +412,8 @@ bool check_asteroid_hit(int16_t bx, int16_t by) {
                     // DESTROY MEDIUM -> Spawn 2 Smalls
                     ast_m[i].active = false;
                     start_explosion(ast_m[i].x, ast_m[i].y);
-                    player_score += 2;
+                    player_score += 7;
+                    game_score += 7 * game_level; // Update game score
 
                     // Make small ones fast! (+/- 60 subpixels)
                     spawn_child(AST_SMALL, ast_m[i].x, ast_m[i].y, ast_m[i].vx + 128, ast_m[i].vy + 128);
@@ -406,7 +443,8 @@ bool check_asteroid_hit(int16_t bx, int16_t by) {
                     // DESTROY SMALL -> Dust
                     ast_s[i].active = false;
                     start_explosion(ast_s[i].x, ast_s[i].y);
-                    player_score += 1;
+                    player_score += 2;
+                    game_score += 2 * game_level; // Update game score
 
                     unsigned ptr = ASTEROID_S_CONFIG + (i * sizeof(vga_mode4_sprite_t));
                     xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);

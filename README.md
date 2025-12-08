@@ -54,9 +54,9 @@ If the default controls do not suit your gamepad, you can remap them using the i
 ## Points Strategy
 **Scoring Points:**
 - Basic Enemy Ships: **1 point**.
-- Small Asteroid: **1 point**.
-- Medium Asteroid: **2 points**.
-- Large Asteroid: **5 points**.
+- Small Asteroid: **2 points**.
+- Medium Asteroid: **7 points**.
+- Large Asteroid: **15 points**.
 
 **Losing Points (Enemy Score):**
 - If the enemy shoots you, the enemy gets **1 point**.
