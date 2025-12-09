@@ -1,8 +1,7 @@
 # Mega Super Fighter Challenge
 for the [Picocomputer 6502](https://picocomputer.github.io/)
 
-Download the latest rom: [2025.12.03/v0.81](https://github.com/jasonfrowe/RPMegaFighter/releases/download/v0.81/rpmegafighterv081.rp6502)  
-Download the gamepad mapper: [2025.11.30/gamepad_mapper](https://github.com/jasonfrowe/RPMegaFighter/releases/download/v0.61/gamepad_mapper.rp6502)
+Download the latest pacakge: [2025.12.08/v0.82](https://github.com/jasonfrowe/RPMegaFighter/releases/download/v0.82/rpmegafighter_v082.zip)  
 
 ![Title Screen](images/title_screen.png)
 
