@@ -178,9 +178,9 @@ static void activate_asteroid(asteroid_t *a, AsteroidType type, int level) {
     // Large:  Starts 22, max 40
     // Medium: Starts 7,  max 16
     // Small:  Starts 2,  max 4
-    if (type == AST_LARGE)       a->health = 20 + (eff_lvl * 2);
-    else if (type == AST_MEDIUM) a->health = 6 + eff_lvl;
-    else                         a->health = 2 + (eff_lvl / 5);
+    if (type == AST_LARGE)       a->health = 20 * eff_lvl;
+    else if (type == AST_MEDIUM) a->health = 6 * eff_lvl;
+    else                         a->health = 2 * eff_lvl;
 
 }
 
@@ -335,7 +335,8 @@ void update_asteroids(void) {
 // ---------------------------------------------------------
 
 // Helper to spawn a child asteroid at a specific spot with specific velocity
-static void spawn_child(AsteroidType type, int16_t x, int16_t y, int16_t vx, int16_t vy) {
+// If aim_at_player is true, velocity will be calculated to head toward player
+static void spawn_child(AsteroidType type, int16_t x, int16_t y, int16_t vx, int16_t vy, bool aim_at_player) {
     asteroid_t *pool;
     int max_count;
     
@@ -352,8 +353,34 @@ static void spawn_child(AsteroidType type, int16_t x, int16_t y, int16_t vx, int
             pool[i].y = y;
             pool[i].rx = 0; 
             pool[i].ry = 0;
-            pool[i].vx = vx;
-            pool[i].vy = vy;
+            
+            // Calculate velocity - aim at player if requested
+            if (aim_at_player) {
+                // Calculate direction to player
+                int16_t dx = player_x - x;
+                int16_t dy = player_y - y;
+                
+                // Calculate base speed for this asteroid type
+                int16_t base_speed = (type == AST_MEDIUM) ? 180 : 280;
+                
+                // Normalize direction and scale to base_speed
+                // Use simple ratio to avoid sqrt
+                int16_t abs_dx = (dx < 0) ? -dx : dx;
+                int16_t abs_dy = (dy < 0) ? -dy : dy;
+                int16_t max_dist = (abs_dx > abs_dy) ? abs_dx : abs_dy;
+                
+                if (max_dist > 0) {
+                    pool[i].vx = (dx * base_speed) / max_dist;
+                    pool[i].vy = (dy * base_speed) / max_dist;
+                } else {
+                    // Fallback if player is at same position
+                    pool[i].vx = vx;
+                    pool[i].vy = vy;
+                }
+            } else {
+                pool[i].vx = vx;
+                pool[i].vy = vy;
+            }
             pool[i].anim_frame = 0;
             
             // Set Health
@@ -420,9 +447,9 @@ bool check_asteroid_hit(int16_t bx, int16_t by) {
                 player_score += 15;
                 game_score += 15 * game_level;
 
-                // Split velocities (diverge from parent)
-                spawn_child(AST_MEDIUM, ast_l[i].x, ast_l[i].y, ast_l[i].vx + 128, ast_l[i].vy - 128);
-                spawn_child(AST_MEDIUM, ast_l[i].x, ast_l[i].y, ast_l[i].vx - 128, ast_l[i].vy + 128);
+                // Split velocities (one diverges, one aims at player)
+                spawn_child(AST_MEDIUM, ast_l[i].x, ast_l[i].y, ast_l[i].vx + 128, ast_l[i].vy - 128, false);
+                spawn_child(AST_MEDIUM, ast_l[i].x, ast_l[i].y, ast_l[i].vx - 128, ast_l[i].vy + 128, true);
                 
                 // Hide sprite immediately
                 unsigned ptr = ASTEROID_L_CONFIG + (i * sizeof(vga_mode4_asprite_t));
@@ -452,9 +479,9 @@ bool check_asteroid_hit(int16_t bx, int16_t by) {
                 player_score += 7;
                 game_score += 7 * game_level;
 
-                // Make small ones fast!
-                spawn_child(AST_SMALL, ast_m[i].x, ast_m[i].y, ast_m[i].vx + 128, ast_m[i].vy + 128);
-                spawn_child(AST_SMALL, ast_m[i].x, ast_m[i].y, ast_m[i].vx - 128, ast_m[i].vy - 128);
+                // Make small ones fast! (one aims at player)
+                spawn_child(AST_SMALL, ast_m[i].x, ast_m[i].y, ast_m[i].vx + 128, ast_m[i].vy + 128, false);
+                spawn_child(AST_SMALL, ast_m[i].x, ast_m[i].y, ast_m[i].vx - 128, ast_m[i].vy - 128, true);
 
                 // Hide sprite
                 unsigned ptr = ASTEROID_M_CONFIG + (i * sizeof(vga_mode4_sprite_t));
@@ -537,10 +564,10 @@ bool check_asteroid_hit_fighter(int16_t fx, int16_t fy) {
                     unsigned ptr = ASTEROID_L_CONFIG + (i * sizeof(vga_mode4_asprite_t));
                     xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, -100);
 
-                    // Spawn Debris
+                    // Spawn Debris (one aims at player)
                     int16_t spread = 50;
-                    spawn_child(AST_MEDIUM, a_cx, a_cy, ast_l[i].vx + spread, ast_l[i].vy - spread);
-                    spawn_child(AST_MEDIUM, a_cx, a_cy, ast_l[i].vx - spread, ast_l[i].vy + spread);
+                    spawn_child(AST_MEDIUM, a_cx, a_cy, ast_l[i].vx + spread, ast_l[i].vy - spread, false);
+                    spawn_child(AST_MEDIUM, a_cx, a_cy, ast_l[i].vx - spread, ast_l[i].vy + spread, true);
                 }
                 return true;
         }
@@ -572,8 +599,8 @@ bool check_asteroid_hit_fighter(int16_t fx, int16_t fy) {
                 xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
 
                 int16_t spread = 80;
-                spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx + spread, ast_m[i].vy - spread);
-                spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx - spread, ast_m[i].vy + spread);
+                spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx + spread, ast_m[i].vy - spread, false);
+                spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx - spread, ast_m[i].vy + spread, true);
             }
             return true;
         }
@@ -673,10 +700,10 @@ bool check_asteroid_hit_fighter(int16_t fx, int16_t fy) {
             unsigned ptr = ASTEROID_M_CONFIG + (i * sizeof(vga_mode4_sprite_t));
             xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
 
-            // Split into Smalls
+            // Split into Smalls (one aims at player)
             int16_t spread = 80;
-            spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx + spread, ast_m[i].vy - spread);
-            spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx - spread, ast_m[i].vy + spread);
+            spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx + spread, ast_m[i].vy - spread, false);
+            spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx - spread, ast_m[i].vy + spread, true);
             
             // Visual feedback
             start_explosion(px, py);
@@ -739,8 +766,8 @@ bool check_asteroid_hit_no_score(int16_t bx, int16_t by) {
                 xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, -100);
 
                 int16_t spread = 50;
-                spawn_child(AST_MEDIUM, a_cx, a_cy, ast_l[i].vx + spread, ast_l[i].vy - spread);
-                spawn_child(AST_MEDIUM, a_cx, a_cy, ast_l[i].vx - spread, ast_l[i].vy + spread);
+                spawn_child(AST_MEDIUM, a_cx, a_cy, ast_l[i].vx + spread, ast_l[i].vy - spread, false);
+                spawn_child(AST_MEDIUM, a_cx, a_cy, ast_l[i].vx - spread, ast_l[i].vy + spread, true);
             }
             return true;
         }
@@ -768,8 +795,8 @@ bool check_asteroid_hit_no_score(int16_t bx, int16_t by) {
                 xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
 
                 int16_t spread = 80;
-                spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx + spread, ast_m[i].vy - spread);
-                spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx - spread, ast_m[i].vy + spread);
+                spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx + spread, ast_m[i].vy - spread, false);
+                spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx - spread, ast_m[i].vy + spread, true);
             }
             return true;
         }

@@ -41,8 +41,8 @@ void start_explosion(int16_t x, int16_t y) {
             explosions[i].vx = (rand16() & 1) ? random(10, 40) : -random(10, 40);
             explosions[i].vy = (rand16() & 1) ? random(10, 40) : -random(10, 40);
             
-            // Start at frame 2 (skip the "ship" frames 0/1)
-            explosions[i].frame = 2; 
+            // Start at frame 1 (skip the "ship" frames 0/1)
+            explosions[i].frame = 1; 
             explosions[i].timer = 0;
 
             // --- CONFIG (Standard Sprite) ---
