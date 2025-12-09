@@ -14,6 +14,9 @@ int16_t star_x_old[32] = {0};
 int16_t star_y_old[32] = {0};
 uint8_t star_colour[32] = {0};
 
+// Color cycle timer for Galaga-style rainbow effect
+static uint16_t star_color_timer = 0;
+
 void init_stars(void) 
 {
     for (uint8_t i = 0; i < NSTAR; i++) {
@@ -28,7 +31,15 @@ void init_stars(void)
 
 void draw_stars(int16_t dx, int16_t dy) 
 {
+    // Cycle rainbow colors (update every 4 frames like in title_screen.c)
+    star_color_timer++;
+    uint8_t base_color_index = 32 + ((star_color_timer / 2) % 224);
+    
     for (uint8_t i = 0; i < NSTAR; i++) {
+        // Each star gets an offset color from the cycling rainbow
+        // This creates the Galaga-style rotating rainbow effect
+        star_colour[i] = 32 + ((base_color_index - 32 + (i * 7)) % 224);
+        
         // Clear previous star position
         if (star_x_old[i] > 0 && star_x_old[i] < 320 && 
             star_y_old[i] > 0 && star_y_old[i] < 180) {

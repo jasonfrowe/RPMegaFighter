@@ -45,8 +45,11 @@ static SBullet sbullets[MAX_SBULLETS];
 static uint16_t sbullet_cooldown_timer = 0;
 static int16_t sbullet_lifetime_timer = 0;
 
+// Exposed cooldown for external modification (e.g., power-ups)
+int16_t sbullet_cooldown = SBULLET_COOLDOWN_MAX;
 
-int16_t sbullet_cooldown;
+// Dirty flags: track which sprites need XRAM updates
+static uint8_t sbullet_sprite_dirty = 0x07; // 3 bullets, all dirty initially
 
 // ============================================================================
 // FUNCTIONS
@@ -74,6 +77,9 @@ void init_sbullets(void)
         sbullets[i].vy_rem = 0;
     }
     sbullet_cooldown_timer = 0;
+    sbullet_lifetime_timer = 0;
+    sbullet_sprite_dirty = 0x07; // Mark all for initial cleanup
+    sbullet_sprite_dirty = 0x07; // Mark all for initial cleanup
     sbullet_cooldown = SBULLET_COOLDOWN_MAX; // Initialize cooldown
 }
 

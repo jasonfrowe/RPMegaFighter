@@ -42,6 +42,9 @@ extern bool check_asteroid_hit(int16_t x, int16_t y);
 Bullet bullets[MAX_BULLETS];
 uint8_t current_bullet_index = 0;
 
+// Dirty flags: track which sprites need XRAM updates (1 bit per bullet)
+static uint8_t bullet_sprite_dirty = 0xFF; // All dirty initially
+
 // Spread shot bullets (internal to this module for now)
 static Bullet sbullets[MAX_SBULLETS];
 // static uint16_t sbullet_cooldown = 0;
@@ -60,6 +63,7 @@ void init_bullets(void)
         bullets[i].vx_rem = 0;
         bullets[i].vy_rem = 0;
     }
+    bullet_sprite_dirty = 0xFF; // Mark all for initial cleanup
     
     // Note: ebullets initialized in init_fighters()
     
@@ -71,11 +75,15 @@ void init_bullets(void)
 void update_bullets(void)
 {
     for (uint8_t i = 0; i < MAX_BULLETS; i++) {
+        uint8_t mask = 1 << i;
+        
         if (bullets[i].status < 0) {
-            // Move sprite offscreen when inactive
-            unsigned ptr = BULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
+            // Only update sprite if dirty (just became inactive)
+            if (bullet_sprite_dirty & mask) {
+                unsigned ptr = BULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
+                xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
+                bullet_sprite_dirty &= ~mask; // Clear dirty flag
+            }
             continue;  // Bullet is inactive
         }
         
@@ -83,26 +91,16 @@ void update_bullets(void)
         if (check_bullet_fighter_collision(bullets[i].x, bullets[i].y, &player_score, &game_score)) {
             // Hit! Remove bullet
             bullets[i].status = -1;
-            
-            // Move bullet sprite offscreen
-            unsigned ptr = BULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-            
+            bullet_sprite_dirty |= mask; // Mark for cleanup next frame
             goto next_bullet;  // Skip rest of bullet update
         }
 
-        // --- NEW: Check Asteroid Collision ---
+        // Interleaved asteroid collision: Check every other bullet per frame
+        // This reduces checks from 8/frame to ~4/frame
         if ((i & 1) == (game_frame & 1)) {
-            // printf("Game Frame: %d, Checking asteroid collision for bullet %d at (%d,%d)\n", 
-            //        game_frame, i, bullets[i].x, bullets[i].y);
             if (check_asteroid_hit(bullets[i].x, bullets[i].y)) {
                 bullets[i].status = -1; // Kill bullet
-                
-                // Hide bullet sprite immediately
-                unsigned ptr = BULLET_CONFIG + (i * sizeof(vga_mode4_sprite_t));
-                xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-                
+                bullet_sprite_dirty |= mask; // Mark for cleanup
                 goto next_bullet; // Move to next bullet
             }
         }
@@ -126,17 +124,14 @@ void update_bullets(void)
         // Check if bullet is still on screen
         if (bullets[i].x > 0 && bullets[i].x < SCREEN_WIDTH && 
             bullets[i].y > 0 && bullets[i].y < SCREEN_HEIGHT) {
-            // Update sprite hardware position
+            // Update sprite hardware position (always update active bullets)
             unsigned ptr = BULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
             xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, bullets[i].x);
             xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, bullets[i].y);
         } else {
             // Bullet went off screen, deactivate it
             bullets[i].status = -1;
-            // Move sprite offscreen
-            unsigned ptr = BULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
+            bullet_sprite_dirty |= mask; // Mark for cleanup
         }
         
     next_bullet:

@@ -27,6 +27,11 @@ asteroid_t ast_l[MAX_AST_L];
 asteroid_t ast_m[MAX_AST_M];
 asteroid_t ast_s[MAX_AST_S];
 
+// Active counts for early-exit optimization
+static uint8_t active_ast_l_count = 0;
+static uint8_t active_ast_m_count = 0;
+static uint8_t active_ast_s_count = 0;
+
 // Config Addresses (From rpmegafighter.c)
 extern unsigned ASTEROID_L_CONFIG;
 extern unsigned ASTEROID_M_CONFIG;
@@ -48,10 +53,24 @@ extern int16_t game_score, game_level;
 #define AWORLD_X (AWORLD_X2 - AWORLD_X1)  // Total world width
 #define AWORLD_Y (AWORLD_Y2 - AWORLD_Y1)  // Total world height
 
+// Inline collision helpers for hot paths
+static inline bool box_collision(int16_t dx, int16_t dy, int16_t radius) {
+    return (dx > -radius && dx < radius && dy > -radius && dy < radius);
+}
+
+static inline bool broad_phase_check(int16_t dx, int16_t dy, int16_t margin) {
+    return (dx >= -margin && dx <= margin && dy >= -margin && dy <= margin);
+}
+
 // ---------------------------------------------------------
 // INITIALIZATION
 // ---------------------------------------------------------
 void init_asteroids(void) {
+    // Reset active counters
+    active_ast_l_count = 0;
+    active_ast_m_count = 0;
+    active_ast_s_count = 0;
+    
     // 1. Reset Large (Affine)
     size_t size_l = sizeof(vga_mode4_asprite_t);
     for (int i=0; i<MAX_AST_L; i++) {
@@ -178,6 +197,7 @@ void spawn_asteroid_wave(int level) {
             if (!ast_l[i].active) {
                 // Pass the level to scaling logic
                 activate_asteroid(&ast_l[i], AST_LARGE, level);
+                active_ast_l_count++;
                 
                 printf("Spawned Large Asteroid %d (Lvl %d)\n", i, level);
                 spawn_timer = 120; // 2 second cooldown
@@ -339,6 +359,13 @@ static void spawn_child(AsteroidType type, int16_t x, int16_t y, int16_t vx, int
             // Set Health
             pool[i].health = (type == AST_MEDIUM) ? 6 : 1;
             
+            // Update active counters
+            if (type == AST_MEDIUM) {
+                active_ast_m_count++;
+            } else {
+                active_ast_s_count++;
+            }
+            
             // Set Config Immediately (So it doesn't wait for next update frame)
             // unsigned ptr;
             // if (type == AST_MEDIUM) {
@@ -352,11 +379,14 @@ static void spawn_child(AsteroidType type, int16_t x, int16_t y, int16_t vx, int
             // }
             // xram0_struct_set(ptr, vga_mode4_sprite_t, has_opacity_metadata, false);
 
-            printf("Spawning Child Type %d at %d,%d (Slot %d)\n", type, x, y, i);
+            // printf("Spawning Child Type %d at %d,%d (Slot %d)\n", type, x, y, i);
             
             return; // Spawned successfully
         }
     }
+    
+    // No free slot available - pool is full
+    printf("WARNING: Failed to spawn asteroid type %d - pool full!\n", type);
 }
 
 // ---------------------------------------------------------
@@ -364,93 +394,101 @@ static void spawn_child(AsteroidType type, int16_t x, int16_t y, int16_t vx, int
 // ---------------------------------------------------------
 
 bool check_asteroid_hit(int16_t bx, int16_t by) {
+    // Early exit if no asteroids active
+    if (active_ast_l_count == 0 && active_ast_m_count == 0 && active_ast_s_count == 0) {
+        return false;
+    }
+
     // 1. Check LARGE Asteroids (Radius ~14px)
-    for (int i = 0; i < MAX_AST_L; i++) {
-        if (!ast_l[i].active) continue;
-        
-        int16_t a_cx = ast_l[i].x + 16 - bx;
-        int16_t a_cy = ast_l[i].y + 16 - by;
-
-        // Simple Box Check (Faster than distance calc)
-        if (a_cx > -14 && a_cx < 14) {
-            if (a_cy > -14 && a_cy < 14) {
-                ast_l[i].health--;
+    if (active_ast_l_count > 0) {
+        for (int i = 0; i < MAX_AST_L; i++) {
+            if (!ast_l[i].active) continue;
             
-                if (ast_l[i].health <= 0) {
-                    // DESTROY LARGE -> Spawn 2 Mediums
-                    ast_l[i].active = false;
-                    start_explosion(ast_l[i].x, ast_l[i].y);
-                    player_score += 15;
-                    game_score += 15 * game_level; // Update game score
+            int16_t dx = ast_l[i].x + 16 - bx;
+            int16_t dy = ast_l[i].y + 16 - by;
+            
+            // Broad-phase then narrow-phase using inline helpers
+            if (!broad_phase_check(dx, dy, 20)) continue;
+            if (!box_collision(dx, dy, 14)) continue;
 
-                    // Split velocities (diverge from parent)
-                    // Parent velocity +/- 30 subpixels
-                    spawn_child(AST_MEDIUM, ast_l[i].x, ast_l[i].y, ast_l[i].vx + 128, ast_l[i].vy - 128);
-                    spawn_child(AST_MEDIUM, ast_l[i].x, ast_l[i].y, ast_l[i].vx - 128, ast_l[i].vy + 128);
-                    
-                    // Hide sprite immediately
-                    unsigned ptr = ASTEROID_L_CONFIG + (i * sizeof(vga_mode4_asprite_t));
-                    xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, -100);
-                }
-                return true; // Bullet hit something
+            ast_l[i].health--;
+            if (ast_l[i].health <= 0) {
+                // DESTROY LARGE -> Spawn 2 Mediums
+                ast_l[i].active = false;
+                active_ast_l_count--;
+                start_explosion(ast_l[i].x, ast_l[i].y);
+                player_score += 15;
+                game_score += 15 * game_level;
+
+                // Split velocities (diverge from parent)
+                spawn_child(AST_MEDIUM, ast_l[i].x, ast_l[i].y, ast_l[i].vx + 128, ast_l[i].vy - 128);
+                spawn_child(AST_MEDIUM, ast_l[i].x, ast_l[i].y, ast_l[i].vx - 128, ast_l[i].vy + 128);
+                
+                // Hide sprite immediately
+                unsigned ptr = ASTEROID_L_CONFIG + (i * sizeof(vga_mode4_asprite_t));
+                xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, -100);
             }
+            return true;
         }
     }
 
     // 2. Check MEDIUM Asteroids (Radius ~7px)
-    for (int i = 0; i < MAX_AST_M; i++) {
-        if (!ast_m[i].active) continue;
+    if (active_ast_m_count > 0) {
+        for (int i = 0; i < MAX_AST_M; i++) {
+            if (!ast_m[i].active) continue;
 
-        int16_t a_cx = ast_m[i].x + 8 - bx;
-        int16_t a_cy = ast_m[i].y + 8 - by;
-        
-        if (a_cx > -8 && a_cx < 8) {
-            if (a_cy > -8 && a_cy < 8) {
-                ast_m[i].health--;
-                
-                if (ast_m[i].health <= 0) {
-                    // DESTROY MEDIUM -> Spawn 2 Smalls
-                    ast_m[i].active = false;
-                    start_explosion(ast_m[i].x, ast_m[i].y);
-                    player_score += 7;
-                    game_score += 7 * game_level; // Update game score
+            int16_t dx = ast_m[i].x + 8 - bx;
+            int16_t dy = ast_m[i].y + 8 - by;
+            
+            if (!broad_phase_check(dx, dy, 12)) continue;
+            if (!box_collision(dx, dy, 8)) continue;
 
-                    // Make small ones fast! (+/- 60 subpixels)
-                    spawn_child(AST_SMALL, ast_m[i].x, ast_m[i].y, ast_m[i].vx + 128, ast_m[i].vy + 128);
-                    spawn_child(AST_SMALL, ast_m[i].x, ast_m[i].y, ast_m[i].vx - 128, ast_m[i].vy - 128);
+            ast_m[i].health--;
+            if (ast_m[i].health <= 0) {
+                // DESTROY MEDIUM -> Spawn 2 Smalls
+                ast_m[i].active = false;
+                active_ast_m_count--;
+                start_explosion(ast_m[i].x, ast_m[i].y);
+                player_score += 7;
+                game_score += 7 * game_level;
 
-                    unsigned ptr = ASTEROID_M_CONFIG + (i * sizeof(vga_mode4_sprite_t));
-                    xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-                }
-                return true;
+                // Make small ones fast!
+                spawn_child(AST_SMALL, ast_m[i].x, ast_m[i].y, ast_m[i].vx + 128, ast_m[i].vy + 128);
+                spawn_child(AST_SMALL, ast_m[i].x, ast_m[i].y, ast_m[i].vx - 128, ast_m[i].vy - 128);
+
+                // Hide sprite
+                unsigned ptr = ASTEROID_M_CONFIG + (i * sizeof(vga_mode4_sprite_t));
+                xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
             }
+            return true;
         }
     }
 
     // 3. Check SMALL Asteroids (Radius ~4px)
-    for (int i = 0; i < MAX_AST_S; i++) {
-        if (!ast_s[i].active) continue;
+    if (active_ast_s_count > 0) {
+        for (int i = 0; i < MAX_AST_S; i++) {
+            if (!ast_s[i].active) continue;
 
-        int16_t a_cx = ast_s[i].x + 4 - bx;
-        int16_t a_cy = ast_s[i].y + 4 - by;
-        
-        // if (abs(a_cx - bx) < 5 && abs(a_cy - by) < 5) {
-        if (a_cx > -4 && a_cx < 4) {
-            if (a_cy > -4 && a_cy < 4) {
-                ast_s[i].health--; // Usually 1 hit kill
-                
-                if (ast_s[i].health <= 0) {
-                    // DESTROY SMALL -> Dust
-                    ast_s[i].active = false;
-                    start_explosion(ast_s[i].x, ast_s[i].y);
-                    player_score += 2;
-                    game_score += 2 * game_level; // Update game score
+            int16_t dx = ast_s[i].x + 4 - bx;
+            int16_t dy = ast_s[i].y + 4 - by;
+            
+            if (!broad_phase_check(dx, dy, 8)) continue;
+            if (!box_collision(dx, dy, 4)) continue;
 
-                    unsigned ptr = ASTEROID_S_CONFIG + (i * sizeof(vga_mode4_sprite_t));
-                    xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-                }
-                return true;
+            ast_s[i].health--; // Usually 1 hit kill
+            if (ast_s[i].health <= 0) {
+                // DESTROY SMALL -> Dust
+                ast_s[i].active = false;
+                active_ast_s_count--;
+                start_explosion(ast_s[i].x, ast_s[i].y);
+                player_score += 2;
+                game_score += 2 * game_level;
+
+                // Hide sprite
+                unsigned ptr = ASTEROID_S_CONFIG + (i * sizeof(vga_mode4_sprite_t));
+                xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
             }
+            return true;
         }
     }
 
@@ -463,6 +501,10 @@ bool check_asteroid_hit(int16_t bx, int16_t by) {
 
 // Returns true if the fighter at (fx, fy) crashed into a rock
 bool check_asteroid_hit_fighter(int16_t fx, int16_t fy) {
+    // Early exit if no asteroids active
+    if (active_ast_l_count == 0 && active_ast_m_count == 0 && active_ast_s_count == 0) {
+        return false;
+    }
     
     // 1. Calculate Fighter Center
     // Fighter is 4x4, center is +2
@@ -472,102 +514,99 @@ bool check_asteroid_hit_fighter(int16_t fx, int16_t fy) {
     // -------------------------------------------------
     // 1. Check LARGE Asteroids
     // -------------------------------------------------
-    // ast_l.x is Top-Left of 32x32 box. Add 16 for Center.
     // Collision Radius: Rock(14) + Fighter(2) = 16
-    for (int i = 0; i < MAX_AST_L; i++) {
-        if (!ast_l[i].active) continue;
-        
-        int16_t a_cx = ast_l[i].x + 16 - f_cx;
-        int16_t a_cy = ast_l[i].y + 16 - f_cy;
-        
-        // if (abs(a_cx - f_cx) < 16 && abs(a_cy - f_cy) < 16) {
-        if (a_cx > -16 && a_cx < 16) {
-            if (a_cy > -16 && a_cy < 16) {
-                ast_l[i].health -= 1;
+    if (active_ast_l_count > 0) {
+        for (int i = 0; i < MAX_AST_L; i++) {
+            if (!ast_l[i].active) continue;
+            
+            int16_t a_cx = ast_l[i].x + 16 - f_cx;
+            int16_t a_cy = ast_l[i].y + 16 - f_cy;
+            
+            if (!broad_phase_check(a_cx, a_cy, 20)) continue;
+            if (!box_collision(a_cx, a_cy, 16)) continue;
+
+            ast_l[i].health -= 1;
                 
                 if (ast_l[i].health <= 0) {
                     // Destroy
                     ast_l[i].active = false;
-                    start_explosion(a_cx - 16, a_cy - 16); // Explosion uses top-left logic?
+                    active_ast_l_count--;
+                    start_explosion(a_cx - 16, a_cy - 16);
                     
                     // Hide sprite
                     unsigned ptr = ASTEROID_L_CONFIG + (i * sizeof(vga_mode4_asprite_t));
                     xram0_struct_set(ptr, vga_mode4_asprite_t, y_pos_px, -100);
 
-                    // Spawn Debris from Center
+                    // Spawn Debris
                     int16_t spread = 50;
                     spawn_child(AST_MEDIUM, a_cx, a_cy, ast_l[i].vx + spread, ast_l[i].vy - spread);
                     spawn_child(AST_MEDIUM, a_cx, a_cy, ast_l[i].vx - spread, ast_l[i].vy + spread);
-                } // else {
-                //    start_explosion(fx, fy);
-                // }
+                }
                 return true;
-            }
         }
     }
 
     // -------------------------------------------------
     // 2. Check MEDIUM Asteroids
     // -------------------------------------------------
-    // ast_m.x is Top-Left of 16x16. Add 8 for Center.
     // Collision Radius: Rock(7) + Fighter(2) = 9
-    for (int i = 0; i < MAX_AST_M; i++) {
-        if (!ast_m[i].active) continue;
-        
-        int16_t a_cx = ast_m[i].x + 8 - f_cx;
-        int16_t a_cy = ast_m[i].y + 8 - f_cy;
+    if (active_ast_m_count > 0) {
+        for (int i = 0; i < MAX_AST_M; i++) {
+            if (!ast_m[i].active) continue;
+            
+            int16_t a_cx = ast_m[i].x + 8 - f_cx;
+            int16_t a_cy = ast_m[i].y + 8 - f_cy;
 
-        // if (abs(a_cx - f_cx) < 9 && abs(a_cy - f_cy) < 9) {
-        if (a_cx > -9 && a_cx < 9) {
-            if (a_cy > -9 && a_cy < 9) {
-                ast_m[i].health -= 1;
+            if (!broad_phase_check(a_cx, a_cy, 12)) continue;
+            if (!box_collision(a_cx, a_cy, 9)) continue;
+
+            ast_m[i].health -= 1;
                 
-                if (ast_m[i].health <= 0) {
-                    ast_m[i].active = false;
-                    start_explosion(ast_m[i].x, ast_m[i].y); // Pass Top-Left if start_explosion expects it
+            if (ast_m[i].health <= 0) {
+                ast_m[i].active = false;
+                active_ast_m_count--;
+                start_explosion(ast_m[i].x, ast_m[i].y);
 
-                    unsigned ptr = ASTEROID_M_CONFIG + (i * sizeof(vga_mode4_sprite_t));
-                    xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
+                // Hide sprite
+                unsigned ptr = ASTEROID_M_CONFIG + (i * sizeof(vga_mode4_sprite_t));
+                xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
 
-                    int16_t spread = 80;
-                    // Spawn children from Center
-                    spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx + spread, ast_m[i].vy - spread);
-                    spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx - spread, ast_m[i].vy + spread);
-                }
-                return true;
+                int16_t spread = 80;
+                spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx + spread, ast_m[i].vy - spread);
+                spawn_child(AST_SMALL, a_cx, a_cy, ast_m[i].vx - spread, ast_m[i].vy + spread);
             }
+            return true;
         }
     }
 
     // -------------------------------------------------
     // 3. Check SMALL Asteroids
     // -------------------------------------------------
-    // ast_s.x is Top-Left of 8x8. Add 4 for Center.
     // Collision Radius: Rock(3) + Fighter(2) = 5
-    for (int i = 0; i < MAX_AST_S; i++) {
-        if (!ast_s[i].active) continue;
-        
-        int16_t a_cx = ast_s[i].x + 4 - f_cx;
-        int16_t a_cy = ast_s[i].y + 4 - f_cy;
+    if (active_ast_s_count > 0) {
+        for (int i = 0; i < MAX_AST_S; i++) {
+            if (!ast_s[i].active) continue;
+            
+            int16_t a_cx = ast_s[i].x + 4 - f_cx;
+            int16_t a_cy = ast_s[i].y + 4 - f_cy;
 
-        // if (abs(a_cx - f_cx) < 5 && abs(a_cy - f_cy) < 5) {
-        if (a_cx > -4 && a_cx < 4) {
-            if (a_cy > -4 && a_cy < 4) {
-                ast_s[i].active = false;
+            if (!broad_phase_check(a_cx, a_cy, 8)) continue;
+            if (!box_collision(a_cx, a_cy, 4)) continue;
+
+            ast_s[i].active = false;
+                active_ast_s_count--;
                 start_explosion(ast_s[i].x, ast_s[i].y);
 
-                unsigned ptr = ASTEROID_S_CONFIG + (i * sizeof(vga_mode4_sprite_t));
-                xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-                
-                return true;
-            }
+            // Hide sprite
+            unsigned ptr = ASTEROID_S_CONFIG + (i * sizeof(vga_mode4_sprite_t));
+            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
+
+            return true;
         }
     }
-    
-    return false;
-}
 
-void check_player_asteroid_collision(int16_t px, int16_t py) {
+    return false;
+}void check_player_asteroid_collision(int16_t px, int16_t py) {
     // 1. Calculate Player Center (8x8 sprite)
     int16_t p_cx = px + 4;
     int16_t p_cy = py + 4;
