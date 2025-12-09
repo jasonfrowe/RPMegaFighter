@@ -4,6 +4,7 @@
 #include "sound.h"
 #include "input.h"
 #include "random.h"
+#include "graphics.h"
 #include <rp6502.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -131,6 +132,10 @@ void trigger_player_death(void) {
     player_is_dying = true;
     death_timer = 180; // 3 Seconds @ 60fps
     
+    // Draw localized explosion flash effect around player position
+    // Using 8 debris particles radiating outward, radius 12, starting from orange/red colors
+    draw_explosion_flash(player_x + 4, player_y + 4, 12, 8, 192);
+    
     // Hide the player sprite immediately
     xram0_struct_set(SPACECRAFT_CONFIG, vga_mode4_asprite_t, y_pos_px, -100);
 }
@@ -159,6 +164,17 @@ void update_player(bool demomode)
     // --- 1. HANDLE DEATH SEQUENCE ---
     if (player_is_dying) {
         death_timer--;
+        
+        // Animated explosion flash effect every 3 frames
+        if (death_timer % 3 == 0) {
+            // Rotate through colors: red->orange->yellow->white
+            uint8_t color_base = 192 + ((180 - death_timer) * 8) % 64;
+            // Vary radius for pulsing effect
+            uint8_t radius = 10 + ((180 - death_timer) % 6);
+            // Rotate the debris pattern
+            uint8_t density = 8;
+            draw_explosion_flash(player_x + 4, player_y + 4, radius, density, color_base);
+        }
         
         // Spawn a new explosion cluster every 10 frames
         if (death_timer % 10 == 0) {

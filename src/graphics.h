@@ -3,6 +3,7 @@
 
 #include "constants.h"
 #include <stdlib.h>
+#include <rp6502.h>
 
 // Swap macro for line drawing
 #define swap(a, b) { uint16_t t = a; a = b; b = t; }
@@ -59,6 +60,58 @@ static inline void draw_line(uint16_t colour, uint16_t x0, uint16_t y0, uint16_t
         if (err < 0) {
             y0 += ystep;
             err += dx;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Draw a localized explosion flash effect around a point
+// Creates radiating debris pattern with minimal pixel writes
+// Parameters:
+//   cx, cy: center point of explosion
+//   radius: size of the effect (typically 8-16)
+//   density: number of debris particles (4-8 recommended)
+//   color_base: starting color index (will vary for each particle)
+// ---------------------------------------------------------------------------
+static inline void draw_explosion_flash(int16_t cx, int16_t cy, uint8_t radius, uint8_t density, uint8_t color_base)
+{
+    // Use a static counter for animation (rotates debris pattern over time)
+    static uint8_t anim_offset = 0;
+    anim_offset++;
+    
+    // Draw radiating debris lines from center
+    for (uint8_t i = 0; i < density; i++) {
+        // Add animation offset to rotate the pattern
+        uint8_t dir = ((i * 8) / density + (anim_offset / 4)) % 8; // Map to 8 directions with rotation
+        
+        // Simple directional offsets (8 directions for efficiency)
+        int16_t dx = 0, dy = 0;
+        
+        switch(dir) {
+            case 0: dx = radius; dy = 0; break;           // Right
+            case 1: dx = radius; dy = -radius; break;     // Up-Right
+            case 2: dx = 0; dy = -radius; break;          // Up
+            case 3: dx = -radius; dy = -radius; break;    // Up-Left
+            case 4: dx = -radius; dy = 0; break;          // Left
+            case 5: dx = -radius; dy = radius; break;     // Down-Left
+            case 6: dx = 0; dy = radius; break;           // Down
+            case 7: dx = radius; dy = radius; break;      // Down-Right
+        }
+        
+        // Draw short debris streak (3-4 pixels) with varying lengths
+        uint8_t streak_len = 3 + ((anim_offset + i) % 3); // Vary streak length
+        uint8_t color = color_base + (i * 30); // Vary color for each particle
+        int16_t x = cx;
+        int16_t y = cy;
+        
+        for (uint8_t j = 0; j < streak_len; j++) {
+            x += dx / 4;
+            y += dy / 4;
+            
+            // Bounds check
+            if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT) {
+                set(x, y, color);
+            }
         }
     }
 }
