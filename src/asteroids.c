@@ -673,10 +673,16 @@ bool check_asteroid_hit_fighter(int16_t fx, int16_t fy) {
             // Use Index 32 (Red in Rainbow Palette) or 0x03 (Standard Red)
             uint8_t text_color = 32; 
             
-            // Centering math (approximate)
-            // Screen 320 wide. Text ~60px wide.
-            draw_text(110, 40, "YOU CRASHED...", text_color);
-            draw_text(125, 52, "GAME OVER", text_color);
+            // Position text to upper-right of player (offset by ~20px right, ~20px up)
+            int16_t text_x = px + 20;
+            int16_t text_y = py - 20;
+            
+            // Clamp to screen bounds
+            if (text_x > 200) text_x = 200;  // Keep text on screen
+            if (text_y < 10) text_y = 10;
+            
+            draw_text(text_x, text_y, "YOU CRASHED...", text_color);
+            draw_text(text_x + 15, text_y + 12, "GAME OVER", text_color);
             
             return;
         }

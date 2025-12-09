@@ -9,6 +9,9 @@
 #include "sbullets.h"
 #include "input.h"
 #include "asteroids.h"
+#include "player.h"
+#include "bkgstars.h"
+#include "explosions.h"
 
 // External references
 extern void draw_text(int16_t x, int16_t y, const char* text, uint8_t color);
@@ -24,6 +27,8 @@ extern void start_end_music(void);
 extern void update_music(void);
 extern void stop_music(void);
 extern void move_asteroids_offscreen(void);
+
+extern void draw_stars(int16_t scroll_dx, int16_t scroll_dy);
 
 extern int16_t game_level;
 extern int16_t game_score;
@@ -126,8 +131,16 @@ void show_level_up(void)
  */
 void show_game_over(void)
 {
-    const uint8_t red_color = 0x20;
-    const uint16_t center_x = 100;
+    const uint16_t center_x = 130;  // Better centered for text
+    uint16_t color_timer = 0;  // For rainbow cycling
+
+    // Clear crash text around player position (40x40 box centered on player)
+    // Player sprite is 8x8, so center is at player_x+4, player_y+4
+    // int16_t clear_x = player_x + 4 - 20;  // Center - half width
+    // int16_t clear_y = player_y + 4 - 20;  // Center - half height
+    // clear_rect(clear_x, clear_y, 60, 60);
+    clear_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT); // Clear entire screen for simplicity
+    draw_stars(scroll_dx, scroll_dy); // Redraw stars in background
     
     // Start end music
     start_end_music();
@@ -153,10 +166,10 @@ void show_game_over(void)
     // Move power-up sprite offscreen
     xram0_struct_set(POWERUP_CONFIG, vga_mode4_sprite_t, x_pos_px, -100);
     xram0_struct_set(POWERUP_CONFIG, vga_mode4_sprite_t, y_pos_px, -100);
-
+    
     // Reset player position to center
     reset_player_position();
-    
+
     // Check if player got a high score
     int8_t high_score_pos = check_high_score(game_score);
     if (high_score_pos >= 0) {
@@ -170,10 +183,6 @@ void show_game_over(void)
         // Save to file
         save_high_scores();
     }
-    
-    // Draw "GAME OVER" message
-    draw_text(center_x, 70, "GAME OVER", red_color);
-    draw_text(center_x - 30, 90, "PRESS FIRE TO CONTINUE", red_color);
     
     printf("\n*** GAME OVER ***\n");
     printf("Final Level: %d\n", game_level);
@@ -192,6 +201,25 @@ void show_game_over(void)
 
         frame_count++;
         update_music();
+        
+        // Update explosions so they animate
+        update_explosions();
+        
+        // Random explosions every few frames for visual effect
+        if ((frame_count % 8) == 0) {  // Trigger every 8 frames
+            int16_t exp_x = rand() % 160 + 160;
+            int16_t exp_y = rand() % 90 + 90;
+            start_explosion(exp_x, exp_y);
+        }
+        
+        // Rainbow color cycling (similar to pause screen)
+        color_timer++;
+        uint8_t game_over_color = 32 + ((color_timer / 2) % 224);
+        uint8_t continue_color = 32 + (((color_timer / 2) + 112) % 224);  // Offset for variety
+        
+        // Draw "GAME OVER" message with rainbow color
+        draw_text(center_x + 7, 50, "GAME OVER", game_over_color);
+        draw_text(center_x - 20, 70, "PRESS FIRE TO CONTINUE", continue_color);
         
         // Update inputs
         handle_input();
