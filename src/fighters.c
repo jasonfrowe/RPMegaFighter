@@ -47,6 +47,7 @@ typedef struct {
 extern int16_t player_x, player_y;
 extern int16_t player_vx_applied, player_vy_applied;
 extern int16_t scroll_dx, scroll_dy;
+extern int16_t player_score;
 extern int16_t enemy_score;
 extern int16_t game_level;
 // extern uint16_t game_frame;
@@ -83,6 +84,7 @@ extern void play_sound(uint8_t type, uint16_t frequency, uint8_t waveform,
 static Bullet ebullets[MAX_EBULLETS];
 static uint16_t ebullet_cooldown = 0;
 static uint16_t max_ebullet_cooldown = INITIAL_EBULLET_COOLDOWN;
+static uint16_t fire_rate_adjustment = INITIAL_EBULLET_COOLDOWN; // Dynamic fire rate based on score
 static uint8_t current_ebullet_index = 0;
 
 static Fighter fighters[MAX_FIGHTERS];
@@ -170,6 +172,21 @@ void update_fighters(void)
     
     int16_t player_world_x = player_x;
     int16_t player_world_y = player_y;
+    
+    // Dynamic fire rate adjustment based on score difference (rubber-banding)
+    // If player is behind by significant margin, slow down enemy fire rate to help them catch up
+    int16_t score_diff = enemy_score - player_score;
+    fire_rate_adjustment = max_ebullet_cooldown;
+    
+    if (score_diff > 5) {
+        // Player is significantly behind - slow enemy fire rate
+        // The further behind, the slower the fire rate (up to 2x slower)
+        uint16_t slowdown = (score_diff / 3); // Every 3 point deficit adds 1 frame
+        // if (slowdown > max_ebullet_cooldown) {
+        //     slowdown = max_ebullet_cooldown; // Cap at 2x slower
+        // }
+        fire_rate_adjustment = max_ebullet_cooldown + slowdown;
+    }
 
     // for (uint8_t i = 0; i < 1; i++) {
     //     printf("Fighter %d position 1: x=%d, y=%d\n", i, fighters[i].x, fighters[i].y);
@@ -328,7 +345,11 @@ void fire_ebullet(void)
     }
     
     // ebullet_cooldown = max_ebullet_cooldown;
-    ebullet_cooldown = NEBULLET_TIMER_MAX;
+    // ebullet_cooldown = max_ebullet_cooldown; // NEBULLET_TIMER_MAX;
+    ebullet_cooldown = fire_rate_adjustment; // Dynamic fire rate based on score
+    if (ebullet_cooldown < NEBULLET_TIMER_MAX) {
+        ebullet_cooldown = NEBULLET_TIMER_MAX;
+    }
     
     if (ebullets[current_ebullet_index].status < 0) {
         for (uint8_t i = 0; i < MAX_FIGHTERS; i++) {
@@ -386,7 +407,7 @@ void fire_ebullet(void)
                 }
             } else if (fighters[i].status > 1) {  // Cooling down after firing
                 fighters[i].status++;
-                if (fighters[i].status > max_ebullet_cooldown) {
+                if (fighters[i].status > fire_rate_adjustment) {
                     fighters[i].status = 1;
                 }
             }

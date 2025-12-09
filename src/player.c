@@ -165,6 +165,31 @@ void update_player(bool demomode)
     if (player_is_dying) {
         death_timer--;
         
+        // Continue player momentum during death (slowly decelerate)
+        if (death_timer > 60) {
+            // Apply remaining velocity with gradual decay
+            player_x += player_vx / 256;
+            player_y += player_vy / 256;
+            
+            // Decay velocity
+            player_vx = (player_vx * 95) / 100;
+            player_vy = (player_vy * 95) / 100;
+            
+            // Draw debris trail dots every 2 frames following the momentum
+            if (death_timer % 2 == 0) {
+                // Use rainbow colors cycling through the palette
+                uint8_t trail_color = 32 + ((180 - death_timer) * 4) % 224;
+                // Draw a small cluster of dots at current position
+                for (int i = 0; i < 3; i++) {
+                    int16_t dot_x = player_x + 4 + (int16_t)random(0, 4) - 2;
+                    int16_t dot_y = player_y + 4 + (int16_t)random(0, 4) - 2;
+                    if (dot_x >= 0 && dot_x < SCREEN_WIDTH && dot_y >= 0 && dot_y < SCREEN_HEIGHT) {
+                        set(dot_x, dot_y, trail_color);
+                    }
+                }
+            }
+        }
+        
         // Animated explosion flash effect every 3 frames
         if (death_timer % 3 == 0) {
             // Rotate through colors: red->orange->yellow->white

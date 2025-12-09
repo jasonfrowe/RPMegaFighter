@@ -14,7 +14,8 @@ typedef enum {
 // Object Structure
 typedef struct {
     bool active;
-    int16_t x, y;       // World Position
+    int16_t x, y;       // World Position (modified by scroll for rendering/collision)
+    int16_t world_x, world_y; // True world position (before scroll adjustment)
     int16_t rx, ry;     // Sub-pixel remainders (for smooth movement)
     int16_t vx, vy;     // Velocity (Speed)
     uint8_t anim_frame; // For rotation/animation

@@ -17,86 +17,97 @@ extern uint8_t keystates[KEYBOARD_BYTES];
 // Pause state
 static bool game_paused = false;
 static bool start_button_pressed = false;  // For edge detection
+static uint16_t pause_color_timer = 0;  // For rainbow color cycling
 
 void display_pause_message(bool show_paused)
 {
-    const uint8_t pause_color = 0xFF;
-    const uint8_t exit_color = 0x03;  // Red for exit message
-    const uint16_t center_x = 120;
+    const uint8_t exit_color = 0x33;  // Red for exit message
+    const uint16_t center_x = 122;  // Shifted right by 2 pixels
     const uint16_t center_y = 85;
     
+    // Rainbow color cycling (similar to starfield)
+    pause_color_timer++;
+    uint8_t base_color = 32 + ((pause_color_timer / 2) % 224);
+    
     if (show_paused) {
-        // Draw "PAUSED" using simple block letters
+        // Draw "PAUSED" using simple block letters with rainbow colors
+        uint8_t p_color = base_color;
+        
         // P
         for (uint16_t x = center_x; x < center_x + 3; x++) {
             for (uint16_t y = center_y; y < center_y + 12; y++) {
-                set(x, y, pause_color);
+                set(x, y, p_color);
             }
         }
         for (uint16_t x = center_x; x < center_x + 8; x++) {
-            set(x, center_y, pause_color);
-            set(x, center_y + 6, pause_color);
+            set(x, center_y, p_color);
+            set(x, center_y + 6, p_color);
         }
         for (uint16_t y = center_y; y < center_y + 7; y++) {
-            set(center_x + 8, y, pause_color);
+            set(center_x + 8, y, p_color);
         }
         
         // A
+        uint8_t a_color = 32 + ((base_color + 32) % 224);
         for (uint16_t y = center_y + 3; y < center_y + 12; y++) {
-            set(center_x + 12, y, pause_color);
-            set(center_x + 20, y, pause_color);
+            set(center_x + 12, y, a_color);
+            set(center_x + 20, y, a_color);
         }
         for (uint16_t x = center_x + 12; x < center_x + 21; x++) {
-            set(x, center_y + 3, pause_color);
-            set(x, center_y + 7, pause_color);
+            set(x, center_y + 3, a_color);
+            set(x, center_y + 7, a_color);
         }
         
         // U
+        uint8_t u_color = 32 + ((base_color + 64) % 224);
         for (uint16_t y = center_y; y < center_y + 12; y++) {
-            set(center_x + 24, y, pause_color);
-            set(center_x + 32, y, pause_color);
+            set(center_x + 24, y, u_color);
+            set(center_x + 32, y, u_color);
         }
         for (uint16_t x = center_x + 24; x < center_x + 33; x++) {
-            set(x, center_y + 11, pause_color);
+            set(x, center_y + 11, u_color);
         }
         
         // S
+        uint8_t s_color = 32 + ((base_color + 96) % 224);
         for (uint16_t x = center_x + 36; x < center_x + 44; x++) {
-            set(x, center_y, pause_color);
-            set(x, center_y + 6, pause_color);
-            set(x, center_y + 11, pause_color);
+            set(x, center_y, s_color);
+            set(x, center_y + 6, s_color);
+            set(x, center_y + 11, s_color);
         }
         for (uint16_t y = center_y; y < center_y + 7; y++) {
-            set(center_x + 36, y, pause_color);
+            set(center_x + 36, y, s_color);
         }
         for (uint16_t y = center_y + 6; y < center_y + 12; y++) {
-            set(center_x + 44, y, pause_color);
+            set(center_x + 44, y, s_color);
         }
         
         // E
+        uint8_t e_color = 32 + ((base_color + 128) % 224);
         for (uint16_t y = center_y; y < center_y + 12; y++) {
-            set(center_x + 40 + 8, y, pause_color);
+            set(center_x + 40 + 8, y, e_color);
         }
         
         // Add exit instruction below PAUSED
         extern void draw_text(uint16_t x, uint16_t y, const char *str, uint8_t colour);
-        draw_text(center_x + 10, center_y + 20, "ESC TO EXIT GAME", exit_color);
+        draw_text(center_x + 2, center_y + 20, "ESC TO EXIT GAME", exit_color);
         for (uint16_t x = center_x + 48; x < center_x + 56; x++) {
-            set(x, center_y, pause_color);
-            set(x, center_y + 6, pause_color);
-            set(x, center_y + 11, pause_color);
+            set(x, center_y, e_color);
+            set(x, center_y + 6, e_color);
+            set(x, center_y + 11, e_color);
         }
         
         // D
+        uint8_t d_color = 32 + ((base_color + 160) % 224);
         for (uint16_t y = center_y; y < center_y + 12; y++) {
-            set(center_x + 60, y, pause_color);
+            set(center_x + 60, y, d_color);
         }
         for (uint16_t x = center_x + 60; x < center_x + 67; x++) {
-            set(x, center_y, pause_color);
-            set(x, center_y + 11, pause_color);
+            set(x, center_y, d_color);
+            set(x, center_y + 11, d_color);
         }
         for (uint16_t y = center_y + 1; y < center_y + 11; y++) {
-            set(center_x + 67, y, pause_color);
+            set(center_x + 67, y, d_color);
         }
         
         // Add exit instruction below PAUSED
