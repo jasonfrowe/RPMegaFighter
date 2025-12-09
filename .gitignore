@@ -6,3 +6,5 @@ __pycache__
 venv/
 old/
 releases/
+out/
+CMakeUserPresets.json
