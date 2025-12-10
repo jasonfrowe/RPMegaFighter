@@ -458,6 +458,11 @@ static void init_game(void)
     reset_music_tempo();  // Reset music tempo to default
     game_over = false;
     
+
+    fighters_killed = 0;
+    asteroids_destroyed = 0;
+    powerups_collected = 0;
+
     // Reset player position and state
     init_player();
     

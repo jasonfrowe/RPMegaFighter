@@ -75,6 +75,7 @@ static uint16_t bullet_cooldown = 0;
 // Global State
 bool player_is_dying = false;
 static int death_timer = 0;
+static int16_t death_x = 0, death_y = 0;  // Frozen position at death
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -132,9 +133,13 @@ void trigger_player_death(void) {
     player_is_dying = true;
     death_timer = 180; // 3 Seconds @ 60fps
     
-    // Draw localized explosion flash effect around player position
+    // Freeze player position at death
+    death_x = player_x + 4;
+    death_y = player_y + 4;
+    
+    // Draw localized explosion flash effect around frozen position
     // Using 8 debris particles radiating outward, radius 12, starting from orange/red colors
-    draw_explosion_flash(player_x + 4, player_y + 4, 12, 8, 192);
+    draw_explosion_flash(death_x, death_y, 12, 8, 192);
     
     // Hide the player sprite immediately
     xram0_struct_set(SPACECRAFT_CONFIG, vga_mode4_asprite_t, y_pos_px, -100);
@@ -165,32 +170,25 @@ void update_player(bool demomode)
     if (player_is_dying) {
         death_timer--;
         
-        // Continue player momentum during death (slowly decelerate)
-        if (death_timer > 60) {
-            // Apply remaining velocity with gradual decay
-            player_x += player_vx / 256;
-            player_y += player_vy / 256;
-            
-            // Decay velocity
-            player_vx = (player_vx * 95) / 100;
-            player_vy = (player_vy * 95) / 100;
-            
-            // Draw debris trail dots every 2 frames following the momentum
-            if (death_timer % 2 == 0) {
-                // Use rainbow colors cycling through the palette
-                uint8_t trail_color = 32 + ((180 - death_timer) * 4) % 224;
-                // Draw a small cluster of dots at current position
-                for (int i = 0; i < 3; i++) {
-                    int16_t dot_x = player_x + 4 + (int16_t)random(0, 4) - 2;
-                    int16_t dot_y = player_y + 4 + (int16_t)random(0, 4) - 2;
-                    if (dot_x >= 0 && dot_x < SCREEN_WIDTH && dot_y >= 0 && dot_y < SCREEN_HEIGHT) {
-                        set(dot_x, dot_y, trail_color);
-                    }
+        // STOP ALL SCROLLING - keep player stationary on screen
+        scroll_dx = 0;
+        scroll_dy = 0;
+        
+        // Draw debris trail dots every 2 frames at frozen position
+        if (death_timer > 60 && death_timer % 2 == 0) {
+            // Use rainbow colors cycling through the palette
+            uint8_t trail_color = 32 + ((180 - death_timer) * 4) % 224;
+            // Draw a small cluster of dots at frozen death position
+            for (int i = 0; i < 3; i++) {
+                int16_t dot_x = death_x + (int16_t)random(0, 4) - 2;
+                int16_t dot_y = death_y + (int16_t)random(0, 4) - 2;
+                if (dot_x >= 0 && dot_x < SCREEN_WIDTH && dot_y >= 0 && dot_y < SCREEN_HEIGHT) {
+                    set(dot_x, dot_y, trail_color);
                 }
             }
         }
         
-        // Animated explosion flash effect every 3 frames
+        // Animated explosion flash effect every 3 frames at frozen position
         if (death_timer % 3 == 0) {
             // Rotate through colors: red->orange->yellow->white
             uint8_t color_base = 192 + ((180 - death_timer) * 8) % 64;
@@ -198,14 +196,14 @@ void update_player(bool demomode)
             uint8_t radius = 10 + ((180 - death_timer) % 6);
             // Rotate the debris pattern
             uint8_t density = 8;
-            draw_explosion_flash(player_x + 4, player_y + 4, radius, density, color_base);
+            draw_explosion_flash(death_x, death_y, radius, density, color_base);
         }
         
-        // Spawn a new explosion cluster every 10 frames
+        // Spawn a new explosion cluster every 10 frames at frozen position
         if (death_timer % 10 == 0) {
-            // Randomize location around the last known player position
-            int16_t ex = player_x + (int16_t)random(0, 40) - 20;
-            int16_t ey = player_y + (int16_t)random(0, 40) - 20;
+            // Randomize location around the frozen death position
+            int16_t ex = death_x + (int16_t)random(0, 40) - 20;
+            int16_t ey = death_y + (int16_t)random(0, 40) - 20;
             start_explosion(ex, ey);
         }
 
