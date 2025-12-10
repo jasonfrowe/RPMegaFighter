@@ -33,39 +33,59 @@ void draw_stars(int16_t dx, int16_t dy)
 {
     // Cycle rainbow colors (update every 4 frames like in title_screen.c)
     star_color_timer++;
+    bool update_color = (star_color_timer % 4) == 0;
+    bool has_movement = (dx != 0 || dy != 0);
+    
+    // Early exit: skip if no movement and not a color update frame
+    if (!has_movement && !update_color) {
+        return;
+    }
+    
     uint8_t base_color_index = 32 + ((star_color_timer / 2) % 224);
     
     for (uint8_t i = 0; i < NSTAR; i++) {
-        // Each star gets an offset color from the cycling rainbow
-        // This creates the Galaga-style rotating rainbow effect
-        star_colour[i] = 32 + ((base_color_index - 32 + (i * 7)) % 224);
-        
-        // Clear previous star position
-        if (star_x_old[i] > 0 && star_x_old[i] < 320 && 
-            star_y_old[i] > 0 && star_y_old[i] < 180) {
-            set(star_x_old[i], star_y_old[i], 0x00);
+        // Update color if it's time
+        if (update_color) {
+            // Each star gets an offset color from the cycling rainbow
+            // This creates the Galaga-style rotating rainbow effect
+            uint8_t new_color = 32 + ((base_color_index - 32 + (i * 7)) % 224);
+            
+            // Only redraw if color actually changed or if we're also moving
+            if (new_color != star_colour[i] || has_movement) {
+                star_colour[i] = new_color;
+            } else {
+                continue; // Color unchanged and no movement, skip this star
+            }
         }
         
-        // Update star position based on scroll
-        star_x[i] = star_x_old[i] - dx;
-        if (star_x[i] <= 0) {
-            star_x[i] += STARFIELD_X;
+        // Clear previous star position only if moving
+        if (has_movement) {
+            if (star_x_old[i] > 0 && star_x_old[i] < 320 && 
+                star_y_old[i] > 0 && star_y_old[i] < 180) {
+                set(star_x_old[i], star_y_old[i], 0x00);
+            }
+            
+            // Update star position based on scroll
+            star_x[i] = star_x_old[i] - dx;
+            if (star_x[i] <= 0) {
+                star_x[i] += STARFIELD_X;
+            }
+            if (star_x[i] > STARFIELD_X) {
+                star_x[i] -= STARFIELD_X;
+            }
+            star_x_old[i] = star_x[i];
+            
+            star_y[i] = star_y_old[i] - dy;
+            if (star_y[i] <= 10) {
+                // When wrapping from top, place at bottom minus HUD offset
+                star_y[i] += (STARFIELD_Y - 10);
+            }
+            if (star_y[i] > STARFIELD_Y) {
+                // When wrapping from bottom, place below HUD area
+                star_y[i] = (star_y[i] - STARFIELD_Y) + 11;
+            }
+            star_y_old[i] = star_y[i];
         }
-        if (star_x[i] > STARFIELD_X) {
-            star_x[i] -= STARFIELD_X;
-        }
-        star_x_old[i] = star_x[i];
-        
-        star_y[i] = star_y_old[i] - dy;
-        if (star_y[i] <= 10) {
-            // When wrapping from top, place at bottom minus HUD offset
-            star_y[i] += (STARFIELD_Y - 10);
-        }
-        if (star_y[i] > STARFIELD_Y) {
-            // When wrapping from bottom, place below HUD area
-            star_y[i] = (star_y[i] - STARFIELD_Y) + 11;
-        }
-        star_y_old[i] = star_y[i];
         
         // Draw star at new position if on screen (avoid HUD area at top)
         if (star_x[i] > 0 && star_x[i] < 320 && 

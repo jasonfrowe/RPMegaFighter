@@ -143,7 +143,7 @@ void show_game_over(void)
     // int16_t clear_y = player_y + 4 - 20;  // Center - half height
     // clear_rect(clear_x, clear_y, 60, 60);
     clear_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT); // Clear entire screen for simplicity
-    draw_stars(scroll_dx, scroll_dy); // Redraw stars in background
+    draw_stars(1, 1); // Redraw stars in background
     
     // Start end music
     start_end_music();
