@@ -14,7 +14,7 @@ static char score_value[6] = "00000";
 #define MESSAGE_HEIGHT 2
 #define MESSAGE_LENGTH (MESSAGE_WIDTH * MESSAGE_HEIGHT)
 static char message[MESSAGE_LENGTH]; 
-static char level_message[5] = "LEVEL";
+static char level_message[6] = "LEVEL";
 
 // Extended Memory space for bitmap graphics (320x180 @ 8-bits)
 const uint16_t vlen = 57600; 
