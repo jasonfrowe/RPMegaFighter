@@ -780,37 +780,39 @@ int main(void)
                 game_frame = 0;
             }
             
-            // Check win/lose conditions
-            if (player_score >= SCORE_TO_WIN && !demo_mode_active) {
-                // Player wins this round - level up!
-                game_level++;
+            // Check win/lose conditions (only when not already game over)
+            if (!game_over) {
+                if (player_score >= SCORE_TO_WIN && !demo_mode_active) {
+                    // Player wins this round - level up!
+                    game_level++;
+                    
+                    // Increase difficulty by reducing enemy bullet cooldown
+                    increase_fighter_difficulty();
+                    
+                    // Speed up the music
+                    increase_music_tempo();
+                    
+                    // Show level up screen
+                    show_level_up();
+                    
+                    // Reset scores for next level
+                    player_score = 0;
+                    enemy_score = 0;
+                    
+                    // Redraw HUD with reset scores
+                    draw_hud();
+                }
                 
-                // Increase difficulty by reducing enemy bullet cooldown
-                increase_fighter_difficulty();
-                
-                // Speed up the music
-                increase_music_tempo();
-                
-                // Show level up screen
-                show_level_up();
-                
-                // Reset scores for next level
-                player_score = 0;
-                enemy_score = 0;
-                
-                // Redraw HUD with reset scores
-                draw_hud();
-            }
-            
-            if (enemy_score >= SCORE_TO_WIN && !demo_mode_active) {
-                // Enemy wins - game over
-                stop_music();  // Stop gameplay music
-                reset_music_tempo();  // Reset tempo for next game
-                init_explosions(); // Re-initialize explosions for game over effect
-                show_game_over();
-                
-                // Set flag to exit gameplay loop and return to title screen
-                game_over = true;
+                if (enemy_score >= SCORE_TO_WIN && !demo_mode_active) {
+                    // Enemy wins - game over
+                    stop_music();  // Stop gameplay music
+                    reset_music_tempo();  // Reset tempo for next game
+                    init_explosions(); // Re-initialize explosions for game over effect
+                    show_game_over();
+                    
+                    // Set flag to exit gameplay loop and return to title screen
+                    game_over = true;
+                }
             }
         }
     // Gameplay loop ended - will return to title screen
