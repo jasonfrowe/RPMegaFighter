@@ -728,9 +728,13 @@ int main(void)
             update_bullets();
             update_sbullets();
             update_ebullets();
-            // update_bomber();
+
+            // spawn_bomber(game_level);
+            // update_bomber();  // New bomber update
+            
             spawn_asteroid_wave(game_level);
             update_asteroids();
+            
             update_explosions();
 
             // Only check if playing (not demo) and not already game over
