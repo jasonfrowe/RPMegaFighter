@@ -186,7 +186,7 @@ void update_fighters(void)
         //     slowdown = max_ebullet_cooldown; // Cap at 2x slower
         // }
         fire_rate_adjustment = max_ebullet_cooldown + slowdown;
-    }
+    } 
 
     // for (uint8_t i = 0; i < 1; i++) {
     //     printf("Fighter %d position 1: x=%d, y=%d\n", i, fighters[i].x, fighters[i].y);
@@ -206,6 +206,10 @@ void update_fighters(void)
             } else {
                 // Animation done, kill fighter or respawn
                 fighters[i].is_exploding = false;
+                // Move sprite offscreen immediately when explosion finishes
+                unsigned ptr = FIGHTER_CONFIG + i * sizeof(vga_mode4_sprite_t);
+                xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
+                xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
             }
 
             if (current_frame == 8 && !powerup.active) {
@@ -346,10 +350,7 @@ void fire_ebullet(void)
     
     // ebullet_cooldown = max_ebullet_cooldown;
     // ebullet_cooldown = max_ebullet_cooldown; // NEBULLET_TIMER_MAX;
-    ebullet_cooldown = fire_rate_adjustment; // Dynamic fire rate based on score
-    if (ebullet_cooldown < NEBULLET_TIMER_MAX) {
-        ebullet_cooldown = NEBULLET_TIMER_MAX;
-    }
+    ebullet_cooldown = fire_rate_adjustment; // Dynamic fire rate based on score (with rubber-banding)
     
     if (ebullets[current_ebullet_index].status < 0) {
         for (uint8_t i = 0; i < MAX_FIGHTERS; i++) {
@@ -489,17 +490,17 @@ void update_ebullets(void)
 void render_fighters(void)
 {
     for (uint8_t i = 0; i < MAX_FIGHTERS; i++) {
+        unsigned ptr = FIGHTER_CONFIG + i * sizeof(vga_mode4_sprite_t);
+        
         if (fighters[i].status > 0 || fighters[i].is_exploding) {
-            
-            unsigned ptr = FIGHTER_CONFIG + i * sizeof(vga_mode4_sprite_t);
-
             xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, fighters[i].x);
             xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, fighters[i].y);
-        } else {
-            unsigned ptr = FIGHTER_CONFIG + i * sizeof(vga_mode4_sprite_t);
+        } else if (fighters[i].status == 0) {
+            // Only move offscreen on first frame of death (status just became 0)
             xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
             xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
         }
+        // Skip fighters with status < 0 (already offscreen, respawning)
     }
 }
 
@@ -545,6 +546,10 @@ bool check_bullet_fighter_collision(int16_t bullet_x, int16_t bullet_y,
                 // Award points based on current level
                 *player_score_out += 1;
                 *game_score_out += game_level;
+                
+                // Track fighter kills
+                extern int16_t fighters_killed;
+                fighters_killed++;
                 
                 return true;
             }

@@ -14,6 +14,8 @@ typedef struct {
 
 #define MAX_EXPLOSIONS 16
 
+extern int16_t active_explosion_count;
+
 void init_explosions(void);
 void update_explosions(void);
 void start_explosion(int16_t x, int16_t y);

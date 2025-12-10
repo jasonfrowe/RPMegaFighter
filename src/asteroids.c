@@ -451,6 +451,10 @@ bool check_asteroid_hit(int16_t bx, int16_t by) {
                 start_explosion(ast_l[i].x, ast_l[i].y);
                 player_score += 15;
                 game_score += 15 * game_level;
+                
+                // Track asteroid destruction
+                extern int16_t asteroids_destroyed;
+                asteroids_destroyed++;
 
                 // Split velocities (one diverges, one aims at player)
                 spawn_child(AST_MEDIUM, ast_l[i].world_x, ast_l[i].world_y, ast_l[i].vx + 128, ast_l[i].vy - 128, false);
@@ -483,6 +487,10 @@ bool check_asteroid_hit(int16_t bx, int16_t by) {
                 start_explosion(ast_m[i].x, ast_m[i].y);
                 player_score += 7;
                 game_score += 7 * game_level;
+                
+                // Track asteroid destruction
+                extern int16_t asteroids_destroyed;
+                asteroids_destroyed++;
 
                 // Make small ones fast! (one aims at player)
                 spawn_child(AST_SMALL, ast_m[i].world_x, ast_m[i].world_y, ast_m[i].vx + 128, ast_m[i].vy + 128, false);
@@ -515,6 +523,10 @@ bool check_asteroid_hit(int16_t bx, int16_t by) {
                 start_explosion(ast_s[i].x, ast_s[i].y);
                 player_score += 2;
                 game_score += 2 * game_level;
+                
+                // Track asteroid destruction
+                extern int16_t asteroids_destroyed;
+                asteroids_destroyed++;
 
                 // Hide sprite
                 unsigned ptr = ASTEROID_S_CONFIG + (i * sizeof(vga_mode4_sprite_t));

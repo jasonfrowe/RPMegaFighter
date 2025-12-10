@@ -43,6 +43,10 @@ void update_powerup(void)
         if (sbullet_cooldown < SBULLET_COOLDOWN_MIN) {
             sbullet_cooldown = SBULLET_COOLDOWN_MIN;
         }
+        
+        // Track powerup collection
+        extern int16_t powerups_collected;
+        powerups_collected++;
 
         return;
     }

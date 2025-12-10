@@ -124,12 +124,12 @@ extern int16_t enemy_score;
 #define BULLET_COOLDOWN     8
 
 // Enemy bullet properties
-#define MAX_EBULLETS        10       // Enemy bullets
+#define MAX_EBULLETS        16       // Enemy bullets
 #define NEBULLET_TIMER_MAX  4        // Frames between enemy bullet shots
 // #define EFIRE_COOLDOWN_TIMER 16      // Frames a fighter must wait between shots
 
 #define INITIAL_EBULLET_COOLDOWN 30  // Starting cooldown for enemy bullets
-#define MIN_EBULLET_COOLDOWN     1   // Minimum cooldown (difficulty cap)
+#define MIN_EBULLET_COOLDOWN     4   // Minimum cooldown (difficulty cap)
 #define EBULLET_COOLDOWN_DECREASE 5  // Decrease per level
 
 // Fighter properties

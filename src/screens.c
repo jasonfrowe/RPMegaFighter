@@ -33,6 +33,9 @@ extern void draw_stars(int16_t scroll_dx, int16_t scroll_dy);
 extern int16_t game_level;
 extern int16_t game_score;
 extern const uint16_t vlen;
+extern int16_t fighters_killed;
+extern int16_t asteroids_destroyed;
+extern int16_t powerups_collected;
 
 // Bullet structure
 typedef struct {
@@ -194,6 +197,19 @@ void show_game_over(void)
     unsigned timeout_frames = 30 * 60; // 30 seconds
     unsigned frame_count = 0;
 
+    uint8_t stats_color = 0xFF;  // Red for stats
+    // Display statistics
+    char stat_buf[32];
+    snprintf(stat_buf, sizeof(stat_buf), "FIGHTERS KILLED: %d", fighters_killed);
+    draw_text(center_x - 12, 110, stat_buf, stats_color);
+    
+    snprintf(stat_buf, sizeof(stat_buf), "ASTEROIDS DESTROYED: %d", asteroids_destroyed);
+    draw_text(center_x - 18, 125, stat_buf, stats_color);
+    
+    snprintf(stat_buf, sizeof(stat_buf), "POWER-UPS COLLECTED: %d", powerups_collected);
+    draw_text(center_x - 18, 140, stat_buf, stats_color);
+
+
     while (frame_count < timeout_frames) {
         if (RIA.vsync == vsync_last)
             continue;
@@ -218,8 +234,9 @@ void show_game_over(void)
         uint8_t continue_color = 32 + (((color_timer / 2) + 112) % 224);  // Offset for variety
         
         // Draw "GAME OVER" message with rainbow color
-        draw_text(center_x + 7, 50, "GAME OVER", game_over_color);
-        draw_text(center_x - 20, 70, "PRESS FIRE TO CONTINUE", continue_color);
+        draw_text(center_x + 7, 80, "GAME OVER", game_over_color);
+        
+        draw_text(center_x - 20, 160, "PRESS FIRE TO CONTINUE", continue_color);
         
         // Update inputs
         handle_input();

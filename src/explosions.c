@@ -7,12 +7,14 @@
 
 explosion_t explosions[MAX_EXPLOSIONS];
 extern unsigned EXPLOSION_CONFIG;
+int16_t active_explosion_count = 0;
 
 // ---------------------------------------------------------
 // INIT
 // ---------------------------------------------------------
 void init_explosions(void) {
     size_t size = sizeof(vga_mode4_sprite_t);
+    active_explosion_count = 0;
     for (int i = 0; i < MAX_EXPLOSIONS; i++) {
         explosions[i].active = false;
         
@@ -32,6 +34,7 @@ void start_explosion(int16_t x, int16_t y) {
     for (int i = 0; i < MAX_EXPLOSIONS; i++) {
         if (!explosions[i].active) {
             explosions[i].active = true;
+            active_explosion_count++;
             
             // Random scatter (-4 to +4 pixels)
             explosions[i].x = x + (int16_t)random(0, 8) - 4;
@@ -69,6 +72,11 @@ void start_explosion(int16_t x, int16_t y) {
 // UPDATE
 // ---------------------------------------------------------
 void update_explosions(void) {
+    // Early exit if no active explosions
+    if (active_explosion_count == 0) {
+        return;
+    }
+    
     size_t size = sizeof(vga_mode4_sprite_t);
 
     for (int i = 0; i < MAX_EXPLOSIONS; i++) {
@@ -89,6 +97,7 @@ void update_explosions(void) {
             if (explosions[i].frame >= 8) {
                 // Done
                 explosions[i].active = false;
+                active_explosion_count--;
                 unsigned ptr = EXPLOSION_CONFIG + (i * size);
                 xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
                 continue;

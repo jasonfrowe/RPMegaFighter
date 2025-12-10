@@ -99,6 +99,11 @@ int16_t game_level = 1;
 uint16_t game_frame = 0;    // Frame counter (0-59)
 static bool game_over = false;
 
+// Game statistics
+int16_t fighters_killed = 0;
+int16_t asteroids_destroyed = 0;
+int16_t powerups_collected = 0;
+
 //Asteroid functions
 extern void init_asteroids(void);
 extern void update_asteroids(void);
