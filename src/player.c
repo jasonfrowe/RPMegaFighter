@@ -457,6 +457,9 @@ void fire_bullet(void)
         bullets[current_bullet_index].vx_rem = 0;
         bullets[current_bullet_index].vy_rem = 0;
         
+        // Increment active bullet count
+        active_bullet_count++;
+        
         unsigned ptr = BULLET_CONFIG + current_bullet_index * sizeof(vga_mode4_sprite_t);
         xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, bullets[current_bullet_index].x);
         xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, bullets[current_bullet_index].y);

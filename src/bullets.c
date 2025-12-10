@@ -41,6 +41,7 @@ extern bool check_asteroid_hit(int16_t x, int16_t y);
 // Player bullets (exported for use by player.c)
 Bullet bullets[MAX_BULLETS];
 uint8_t current_bullet_index = 0;
+int16_t active_bullet_count = 0;  // Track active bullets for optimization (exported)
 
 // Dirty flags: track which sprites need XRAM updates (1 bit per bullet)
 static uint8_t bullet_sprite_dirty = 0xFF; // All dirty initially
@@ -56,6 +57,7 @@ static Bullet sbullets[MAX_SBULLETS];
 
 void init_bullets(void)
 {
+    active_bullet_count = 0;
     for (uint8_t i = 0; i < MAX_BULLETS; i++) {
         bullets[i].status = -1;
         bullets[i].x = 0;
@@ -74,6 +76,22 @@ void init_bullets(void)
 
 void update_bullets(void)
 {
+    // Early exit if no active bullets
+    if (active_bullet_count == 0) {
+        // Still need to clean up any dirty sprites
+        if (bullet_sprite_dirty != 0) {
+            for (uint8_t i = 0; i < MAX_BULLETS; i++) {
+                uint8_t mask = 1 << i;
+                if (bullet_sprite_dirty & mask) {
+                    unsigned ptr = BULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
+                    xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
+                    bullet_sprite_dirty &= ~mask;
+                }
+            }
+        }
+        return;
+    }
+    
     for (uint8_t i = 0; i < MAX_BULLETS; i++) {
         uint8_t mask = 1 << i;
         
@@ -91,6 +109,7 @@ void update_bullets(void)
         if (check_bullet_fighter_collision(bullets[i].x, bullets[i].y, &player_score, &game_score)) {
             // Hit! Remove bullet
             bullets[i].status = -1;
+            active_bullet_count--;
             bullet_sprite_dirty |= mask; // Mark for cleanup next frame
             goto next_bullet;  // Skip rest of bullet update
         }
@@ -100,6 +119,7 @@ void update_bullets(void)
         if ((i & 1) == (game_frame & 1)) {
             if (check_asteroid_hit(bullets[i].x, bullets[i].y)) {
                 bullets[i].status = -1; // Kill bullet
+                active_bullet_count--;
                 bullet_sprite_dirty |= mask; // Mark for cleanup
                 goto next_bullet; // Move to next bullet
             }
@@ -131,6 +151,7 @@ void update_bullets(void)
         } else {
             // Bullet went off screen, deactivate it
             bullets[i].status = -1;
+            active_bullet_count--;
             bullet_sprite_dirty |= mask; // Mark for cleanup
         }
         

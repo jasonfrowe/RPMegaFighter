@@ -2,6 +2,7 @@
 #define BULLETS_H
 
 #include <stdint.h>
+#include "constants.h"
 
 /**
  * bullets.h - Player bullet management system
@@ -28,5 +29,10 @@ void init_bullets(void);
  * - Remove off-screen bullets
  */
 void update_bullets(void);
+
+// Exported for use by player.c
+extern Bullet bullets[MAX_BULLETS];
+extern uint8_t current_bullet_index;
+extern int16_t active_bullet_count;
 
 #endif // BULLETS_H

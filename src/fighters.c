@@ -86,6 +86,7 @@ static uint16_t ebullet_cooldown = 0;
 static uint16_t max_ebullet_cooldown = INITIAL_EBULLET_COOLDOWN;
 static uint16_t fire_rate_adjustment = INITIAL_EBULLET_COOLDOWN; // Dynamic fire rate based on score
 static uint8_t current_ebullet_index = 0;
+static int16_t active_ebullet_count = 0;  // Track active ebullets for optimization
 
 static Fighter fighters[MAX_FIGHTERS];
 int16_t active_fighter_count = 0;  // Non-static, may be used externally
@@ -157,6 +158,7 @@ void init_fighters(void)
     active_fighter_count = MAX_FIGHTERS;
     
     // Initialize ebullets
+    active_ebullet_count = 0;
     for (uint8_t i = 0; i < MAX_EBULLETS; i++) {
         ebullets[i].status = -1;
         ebullets[i].x = 0;
@@ -389,6 +391,7 @@ void fire_ebullet(void)
                         ebullets[current_ebullet_index].y = fighters[i].y;
                         ebullets[current_ebullet_index].vx_rem = 0;
                         ebullets[current_ebullet_index].vy_rem = 0;
+                        active_ebullet_count++;
                         
                         unsigned bullet_ptr = EBULLET_CONFIG + current_ebullet_index * sizeof(vga_mode4_sprite_t);
                         xram0_struct_set(bullet_ptr, vga_mode4_sprite_t, x_pos_px, fighters[i].x);
@@ -418,12 +421,20 @@ void fire_ebullet(void)
 
 void update_ebullets(void)
 {
+    // Early exit if no active ebullets
+    if (active_ebullet_count == 0) {
+        if (ebullet_cooldown > 0) {
+            ebullet_cooldown--;
+        }
+        return;
+    }
+    
     // Decrement cooldown
     if (ebullet_cooldown > 0) {
         ebullet_cooldown--;
     }
     
-    // Adjust for scrolling
+    // Adjust for scrolling - only active bullets
     for (uint8_t i = 0; i < MAX_EBULLETS; i++) {
         if (ebullets[i].status >= 0) {
             ebullets[i].x -= scroll_dx;
@@ -432,13 +443,11 @@ void update_ebullets(void)
     }
     
     for (uint8_t i = 0; i < MAX_EBULLETS; i++) {
-        unsigned ptr = EBULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
-        
         if (ebullets[i].status < 0) {
-            xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
-            xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
-            continue;
+            continue;  // Skip inactive bullets entirely
         }
+        
+        unsigned ptr = EBULLET_CONFIG + i * sizeof(vga_mode4_sprite_t);
         
         if (player_x < ebullets[i].x + 2 &&
             player_x + 8 > ebullets[i].x &&
@@ -446,6 +455,7 @@ void update_ebullets(void)
             player_y + 8 > ebullets[i].y) {
             
             ebullets[i].status = -1;
+            active_ebullet_count--;
             enemy_score++;
             
             xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
@@ -458,6 +468,9 @@ void update_ebullets(void)
             if (check_asteroid_hit_no_score(ebullets[i].x, ebullets[i].y)) {
                 // Hit!
                 ebullets[i].status = -1; // Kill bullet
+                active_ebullet_count--;
+                xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
+                xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
                 
                 continue; // Stop processing this bullet
             }
@@ -481,6 +494,7 @@ void update_ebullets(void)
             xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, ebullets[i].y);
         } else {
             ebullets[i].status = -1;
+            active_ebullet_count--;
             xram0_struct_set(ptr, vga_mode4_sprite_t, x_pos_px, -100);
             xram0_struct_set(ptr, vga_mode4_sprite_t, y_pos_px, -100);
         }
@@ -526,6 +540,7 @@ void move_ebullets_offscreen(void)
             ebullets[i].status = -1;
         }
     }
+    active_ebullet_count = 0;
 }
 
 bool check_bullet_fighter_collision(int16_t bullet_x, int16_t bullet_y, 
