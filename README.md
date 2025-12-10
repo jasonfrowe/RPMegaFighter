@@ -1,7 +1,7 @@
 # Mega Super Fighter Challenge
 for the [Picocomputer 6502](https://picocomputer.github.io/)
 
-Download the latest pacakge: [2025.12.09/v0.83](https://github.com/jasonfrowe/RPMegaFighter/releases/download/v0.83/rpmegafighter_v083.zip)  
+Download the latest pacakge: [2025.12.09/v0.90](https://github.com/jasonfrowe/RPMegaFighter/releases/download/v0.90/rpmegafighter_v090.zip)  
 
 ![Title Screen](images/title_screen.png)
 
