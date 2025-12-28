@@ -3,29 +3,14 @@
     "cmake.showSystemKits": false,
     "cmake.preferredGenerators": [
         "Ninja",
-        "Unix Makefiles"
-    ],
-    "cmake.configureArgs": [
-        "-DCMAKE_PREFIX_PATH=/Users/rowe/Software/rp6502/llvm-mos",
-        "-DLLVM_MOS_PLATFORM=rp6502"
+        "Unix Makefiles",
     ],
     "cmake.options.advanced": {
-        "launchTarget": {
-            "statusBarVisibility": "visible"
-        },
         "launch": {
-            "statusBarVisibility": "hidden"
+            "statusBarVisibility": "hidden",
         },
         "debug": {
-            "statusBarVisibility": "hidden"
+            "statusBarVisibility": "hidden",
         }
     },
-    "C_Cpp.errorSquiggles": "disabled",
-    "files.associations": {
-        "highscore.h": "c",
-        "definitions.h": "c",
-        "random.h": "c",
-        "fighters.h": "c",
-        "player.h": "c"
-    }
 }
