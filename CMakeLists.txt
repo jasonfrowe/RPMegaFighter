@@ -43,21 +43,8 @@ rp6502_asset(rpmegafighter 0x1F200 images/asteroid_L.bin)
 rp6502_asset(rpmegafighter 0x1FA00 images/asteroid_M.bin)
 rp6502_asset(rpmegafighter 0x1FC00 images/asteroid_S.bin)
 rp6502_executable(rpmegafighter
-    spaceship2.bin.rp6502
-    Earth.bin.rp6502
-    fighter.bin.rp6502
-    ebullet.bin.rp6502
-    bullet.bin.rp6502
-    sbullet.bin.rp6502
-    fighter_explode.bin.rp6502
-    powerup.bin.rp6502
-    bomber.bin.rp6502
-    asteroid_L.bin.rp6502
-    asteroid_M.bin.rp6502
-    asteroid_S.bin.rp6502
     DATA file
     RESET file
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/rpmegafighter.hlp
 )
 target_sources(rpmegafighter PRIVATE
     src/rpmegafighter.c
