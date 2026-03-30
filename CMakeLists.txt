@@ -9,6 +9,7 @@ set(LLVM_MOS_PLATFORM rp6502)
 find_package(llvm-mos-sdk REQUIRED)
 
 project(RPMegaFighter C CXX ASM)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Default to size-optimized build for embedded target unless user specified
 # We can also try Release, but Minsizerel is more focused on size

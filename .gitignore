@@ -1,10 +1,9 @@
 __pycache__
 /.rp6502
 /build
-/.github
-.DS_Store
-venv/
-old/
-releases/
-out/
 CMakeUserPresets.json
+.DS_Store
+.venv
+/releases
+.vscode/c_cpp_properties.json
+/old
