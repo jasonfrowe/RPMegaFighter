@@ -19,6 +19,34 @@ bool handled_key = false;
 // Button mapping storage
 ButtonMapping button_mappings[GAMEPAD_COUNT][ACTION_COUNT];
 
+#define ANALOG_DEADZONE 32
+
+static bool is_default_move_input_pressed(uint8_t player_id, GameAction action)
+{
+    const gamepad_t *pad = &gamepad[player_id];
+
+    switch (action) {
+        case ACTION_THRUST:
+            return ((pad->dpad & GP_DPAD_UP) != 0) ||
+                   ((pad->sticks & GP_LSTICK_UP) != 0) ||
+                   (pad->ly <= -ANALOG_DEADZONE);
+        case ACTION_REVERSE_THRUST:
+            return ((pad->dpad & GP_DPAD_DOWN) != 0) ||
+                   ((pad->sticks & GP_LSTICK_DOWN) != 0) ||
+                   (pad->ly >= ANALOG_DEADZONE);
+        case ACTION_ROTATE_LEFT:
+            return ((pad->dpad & GP_DPAD_LEFT) != 0) ||
+                   ((pad->sticks & GP_LSTICK_LEFT) != 0) ||
+                   (pad->lx <= -ANALOG_DEADZONE);
+        case ACTION_ROTATE_RIGHT:
+            return ((pad->dpad & GP_DPAD_RIGHT) != 0) ||
+                   ((pad->sticks & GP_LSTICK_RIGHT) != 0) ||
+                   (pad->lx >= ANALOG_DEADZONE);
+        default:
+            return false;
+    }
+}
+
 /**
  * Read keyboard and gamepad input
  */
@@ -137,8 +165,13 @@ bool is_action_pressed(uint8_t player_id, GameAction action)
         case 2: gamepad_value = gamepad[player_id].btn0; break;
         case 3: gamepad_value = gamepad[player_id].btn1; break;
     }
-    
-    return (gamepad_value & mapping->gamepad_mask) != 0;
+
+    if ((gamepad_value & mapping->gamepad_mask) != 0) {
+        return true;
+    }
+
+    // Always accept both D-pad and analog-stick movement for core directional actions.
+    return is_default_move_input_pressed(player_id, action);
 }
 
 /**

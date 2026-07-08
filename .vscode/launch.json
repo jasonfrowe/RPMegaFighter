@@ -2,17 +2,31 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "RP6502",
-            "type": "debugpy",
+            "name": "RP6502 (Emulator)",
+            "type": "python",
             "request": "launch",
-            "console": "integratedTerminal",
             "program": "${workspaceFolder}/tools/rp6502.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-c",
+                "${workspaceFolder}/.rp6502",
+                "emu"
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "RP6502 (Hardware Run)",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/tools/rp6502.py",
+            "console": "integratedTerminal",
             "args": [
                 "-c",
                 "${workspaceFolder}/.rp6502",
                 "run",
                 "${command:cmake.launchTargetPath}.rp6502"
             ],
-        },
+            "justMyCode": false
+        }
     ]
 }

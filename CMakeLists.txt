@@ -11,6 +11,8 @@ find_package(llvm-mos-sdk REQUIRED)
 project(RPMegaFighter C CXX ASM)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+add_compile_options(-g -gdwarf-4) # for rp6502-emu source-level debug
+
 # Default to size-optimized build for embedded target unless user specified
 # We can also try Release, but Minsizerel is more focused on size
 if(NOT CMAKE_BUILD_TYPE)
